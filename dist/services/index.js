@@ -1,13 +1,14 @@
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
+var __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
 Object.defineProperty(exports, "__esModule", { value: true });
 const consumed_1 = __importDefault(require("./consumed"));
 const provided_1 = __importDefault(require("./provided"));
 exports.default = {
-    consumed: consumed_1.default,
-    provided: provided_1.default,
+  consumed: consumed_1.default,
+  provided: provided_1.default,
 };
 /**
  * # Hydrogen <img src="https://cdn.rawgit.com/nteract/hydrogen/17eda245/static/animate-logo.svg" alt="hydrogen animated logo" height="50px" align="right" />
