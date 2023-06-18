@@ -1,17 +1,23 @@
 import { TextEditor, Panel } from "atom";
 import { setPreviouslyFocusedElement } from "./utils";
 
-//type opts = {
-//  prompt: string;
-//  defaultText?: string;
-//  allowCancel?: boolean;
-//  password?: boolean;
-//};
-//type cb = (s: string) => void;
+type opts = {
+  prompt: string;
+  defaultText?: string;
+  allowCancel?: boolean;
+  password?: boolean;
+};
+type cb = (s: string) => void;
 export default class InputView {
+  onConfirmed: cb;
+  element: HTMLElement;
+  miniEditor: TextEditor;
+  panel: Panel | null | undefined;
+  previouslyFocusedElement: HTMLElement | null | undefined;
+
   constructor(
-    { prompt, defaultText, allowCancel, password },
-    onConfirmed
+    { prompt, defaultText, allowCancel, password }: opts,
+    onConfirmed: cb
   ) {
     this.onConfirmed = onConfirmed;
     this.element = document.createElement("div");

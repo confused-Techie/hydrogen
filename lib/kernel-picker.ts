@@ -1,21 +1,28 @@
 import { Panel } from "atom";
 import SelectListView, { SelectListProperties } from "atom-select-list";
 import { log, setPreviouslyFocusedElement } from "./utils";
+import type { KernelspecMetadata } from "@nteract/types";
 
 export default class KernelPicker {
-  constructor(kernelSpecs) {
+  kernelSpecs: Array<KernelspecMetadata>;
+  onConfirmed: ((kernelSpecs: KernelspecMetadata) => void) | null | undefined;
+  selectListView: SelectListView;
+  panel: Panel | null | undefined;
+  previouslyFocusedElement: HTMLElement | null | undefined;
+
+  constructor(kernelSpecs: Array<KernelspecMetadata>) {
     this.kernelSpecs = kernelSpecs;
     this.onConfirmed = null;
     this.selectListView = new SelectListView({
       itemsClassList: ["mark-active"],
-      items: [],
-      filterKeyForItem: (item) => item.display_name,
-      elementForItem: (item) => {
+      items: [] as KernelspecMetadata[],
+      filterKeyForItem: (item: KernelspecMetadata) => item.display_name,
+      elementForItem: (item: KernelspecMetadata) => {
         const element = document.createElement("li");
         element.textContent = item.display_name;
         return element;
       },
-      didConfirmSelection: (item) => {
+      didConfirmSelection: (item: KernelspecMetadata) => {
         log("Selected kernel:", item);
         if (this.onConfirmed) {
           this.onConfirmed(item);
@@ -62,7 +69,7 @@ export default class KernelPicker {
     } else {
       await this.selectListView.update({
         items: this.kernelSpecs,
-      });
+      } as SelectListProperties);
       this.attach();
     }
   }

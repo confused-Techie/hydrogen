@@ -9,22 +9,23 @@ import {
   rowRangeForCodeFoldAtBufferRow,
   js_idx_to_char_idx,
 } from "./utils";
+import type { HydrogenCellType } from "./hydrogen";
 
-export function normalizeString(code) {
+export function normalizeString(code: string | null | undefined) {
   if (code) {
     return code.replace(/\r\n|\r/g, "\n");
   }
 
   return null;
 }
-export function getRow(editor, row) {
+export function getRow(editor: TextEditor, row: number) {
   return normalizeString(editor.lineTextForBufferRow(row));
 }
-export function getTextInRange(editor, start, end) {
+export function getTextInRange(editor: TextEditor, start: Point, end: Point) {
   const code = editor.getTextInBufferRange([start, end]);
   return normalizeString(code);
 }
-export function getRows(editor, startRow, endRow) {
+export function getRows(editor: TextEditor, startRow: number, endRow: number) {
   const code = editor.getTextInBufferRange({
     start: {
       row: startRow,
@@ -37,12 +38,15 @@ export function getRows(editor, startRow, endRow) {
   });
   return normalizeString(code);
 }
-export function getMetadataForRow(editor, anyPointInCell) {
+export function getMetadataForRow(
+  editor: TextEditor,
+  anyPointInCell: Point
+): HydrogenCellType {
   if (isMultilanguageGrammar(editor.getGrammar())) {
     return "codecell";
   }
 
-  let cellType = "codecell";
+  let cellType: HydrogenCellType = "codecell";
   const buffer = editor.getBuffer();
   anyPointInCell = new Point(
     anyPointInCell.row,
@@ -77,7 +81,10 @@ export function getMetadataForRow(editor, anyPointInCell) {
 
   return cellType;
 }
-export function removeCommentsMarkdownCell(editor, text) {
+export function removeCommentsMarkdownCell(
+  editor: TextEditor,
+  text: string
+): string {
   const commentStartString = getCommentStartString(editor);
   if (!commentStartString) {
     return text;
@@ -96,18 +103,22 @@ export function removeCommentsMarkdownCell(editor, text) {
 
   return stripIndent(editedLines.join("\n"));
 }
-export function getSelectedText(editor) {
+export function getSelectedText(editor: TextEditor) {
   return normalizeString(editor.getSelectedText());
 }
-export function isComment(editor, position) {
+export function isComment(editor: TextEditor, position: Point) {
   const scope = editor.scopeDescriptorForBufferPosition(position);
   const scopeString = scope.getScopeChain();
   return scopeString.includes("comment.line");
 }
-export function isBlank(editor, row) {
+export function isBlank(editor: TextEditor, row: number) {
   return editor.getBuffer().isRowBlank(row);
 }
-export function escapeBlankRows(editor, startRow, endRow) {
+export function escapeBlankRows(
+  editor: TextEditor,
+  startRow: number,
+  endRow: number
+) {
   while (endRow > startRow) {
     if (!isBlank(editor, endRow)) {
       break;
@@ -117,7 +128,7 @@ export function escapeBlankRows(editor, startRow, endRow) {
 
   return endRow;
 }
-export function getFoldRange(editor, row) {
+export function getFoldRange(editor: TextEditor, row: number) {
   const range = rowRangeForCodeFoldAtBufferRow(editor, row);
   if (!range) {
     return;
@@ -133,7 +144,7 @@ export function getFoldRange(editor, row) {
   log("getFoldRange:", range);
   return range;
 }
-export function getFoldContents(editor, row) {
+export function getFoldContents(editor: TextEditor, row: number) {
   const range = getFoldRange(editor, row);
   if (!range) {
     return;
@@ -143,7 +154,7 @@ export function getFoldContents(editor, row) {
     row: range[1],
   };
 }
-export function getCodeToInspect(editor) {
+export function getCodeToInspect(editor: TextEditor) {
   const selectedText = getSelectedText(editor);
   let code;
   let cursorPosition;
@@ -167,7 +178,9 @@ export function getCodeToInspect(editor) {
   cursorPosition = js_idx_to_char_idx(cursorPosition, code);
   return [code, cursorPosition];
 }
-export function getCommentStartString(editor) {
+export function getCommentStartString(
+  editor: TextEditor
+): string | null | undefined {
   const {
     commentStartString, // $FlowFixMe: This is an unofficial API
   } = editor.tokenizedBuffer.commentStringsForPosition(
@@ -181,7 +194,7 @@ export function getCommentStartString(editor) {
 
   return commentStartString.trimRight();
 }
-export function getRegexString(editor) {
+export function getRegexString(editor: TextEditor) {
   const commentStartString = getCommentStartString(editor);
   if (!commentStartString) {
     return null;
@@ -190,7 +203,7 @@ export function getRegexString(editor) {
   const regexString = `${escapedCommentStartString} *%% *(md|markdown)?| *<(codecell|md|markdown)>| *(In\[[0-9 ]*\])`;
   return regexString;
 }
-export function getBreakpoints(editor) {
+export function getBreakpoints(editor: TextEditor) {
   const buffer = editor.getBuffer();
   const breakpoints = [];
   const regexString = getRegexString(editor);
@@ -209,7 +222,7 @@ export function getBreakpoints(editor) {
   return breakpoints;
 }
 
-function getCell(editor, anyPointInCell) {
+function getCell(editor: TextEditor, anyPointInCell?: Point) {
   if (!anyPointInCell) {
     anyPointInCell = editor.getCursorBufferPosition();
   }
@@ -251,14 +264,18 @@ function getCell(editor, anyPointInCell) {
   return new Range(start, end);
 }
 
-function isEmbeddedCode(editor, referenceScope, row) {
+function isEmbeddedCode(
+  editor: TextEditor,
+  referenceScope: string,
+  row: number
+) {
   const scopes = editor
     .scopeDescriptorForBufferPosition(new Point(row, 0))
     .getScopesArray();
   return scopes.includes(referenceScope);
 }
 
-function getCurrentFencedCodeBlock(editor) {
+function getCurrentFencedCodeBlock(editor: TextEditor) {
   const buffer = editor.getBuffer();
   const { row: bufferEndRow } = buffer.getEndPosition();
   const cursor = editor.getCursorBufferPosition();
@@ -280,14 +297,14 @@ function getCurrentFencedCodeBlock(editor) {
   return new Range([start, 0], [end + 1, 0]);
 }
 
-export function getCurrentCell(editor) {
+export function getCurrentCell(editor: TextEditor) {
   if (isMultilanguageGrammar(editor.getGrammar())) {
     return getCurrentFencedCodeBlock(editor);
   }
 
   return getCell(editor);
 }
-export function getCells(editor, breakpoints = []) {
+export function getCells(editor: TextEditor, breakpoints: Array<Point> = []) {
   if (breakpoints.length !== 0) {
     breakpoints.sort((a, b) => a.compare(b));
   } else {
@@ -296,7 +313,10 @@ export function getCells(editor, breakpoints = []) {
 
   return getCellsForBreakPoints(editor, breakpoints);
 }
-export function getCellsForBreakPoints(editor, breakpoints) {
+export function getCellsForBreakPoints(
+  editor: TextEditor,
+  breakpoints: Array<Point>
+): Array<Range> {
   let start = new Point(0, 0);
   // Let start be earliest row with text
   editor.scan(/\S/, (match) => {
@@ -312,7 +332,7 @@ export function getCellsForBreakPoints(editor, breakpoints) {
   );
 }
 
-function centerScreenOnCursorPosition(editor) {
+function centerScreenOnCursorPosition(editor: TextEditor) {
   const cursorPosition = editor.element.pixelPositionForScreenPosition(
     editor.getCursorScreenPosition()
   ).top;
@@ -320,7 +340,7 @@ function centerScreenOnCursorPosition(editor) {
   editor.element.setScrollTop(cursorPosition - editorHeight / 2);
 }
 
-export function moveDown(editor, row) {
+export function moveDown(editor: TextEditor, row: number) {
   const lastRow = editor.getLastBufferRow();
 
   if (row >= lastRow) {
@@ -343,7 +363,11 @@ export function moveDown(editor, row) {
   atom.config.get("Hydrogen.centerOnMoveDown") &&
     centerScreenOnCursorPosition(editor);
 }
-export function findPrecedingBlock(editor, row, indentLevel) {
+export function findPrecedingBlock(
+  editor: TextEditor,
+  row: number,
+  indentLevel: number
+) {
   let previousRow = row - 1;
 
   while (previousRow >= 0) {
@@ -377,7 +401,7 @@ export function findPrecedingBlock(editor, row, indentLevel) {
 
   return null;
 }
-export function findCodeBlock(editor) {
+export function findCodeBlock(editor: TextEditor) {
   const selectedText = getSelectedText(editor);
 
   if (selectedText) {
@@ -440,13 +464,13 @@ export function findCodeBlock(editor) {
     row,
   };
 }
-export function foldCurrentCell(editor) {
+export function foldCurrentCell(editor: TextEditor) {
   const cellRange = getCurrentCell(editor);
   const newRange = adjustCellFoldRange(editor, cellRange);
   editor.setSelectedBufferRange(newRange);
   editor.getSelections()[0].fold();
 }
-export function foldAllButCurrentCell(editor) {
+export function foldAllButCurrentCell(editor: TextEditor) {
   const initialSelections = editor.getSelectedBufferRanges();
   // I take .slice(1) because there's always an empty cell range from [0,0] to
   // [0,0]
@@ -461,7 +485,7 @@ export function foldAllButCurrentCell(editor) {
   editor.setSelectedBufferRanges(initialSelections);
 }
 
-function adjustCellFoldRange(editor, range) {
+function adjustCellFoldRange(editor: TextEditor, range: Range) {
   const startRow = range.start.row > 0 ? range.start.row - 1 : 0;
   const startWidth = editor.lineTextForBufferRow(startRow).length;
   const endRow =
@@ -475,6 +499,6 @@ function adjustCellFoldRange(editor, range) {
   );
 }
 
-export function getEscapeBlankRowsEndRow(editor, end) {
+export function getEscapeBlankRowsEndRow(editor: TextEditor, end: Point) {
   return end.row === editor.getLastBufferRow() ? end.row : end.row - 1;
 }

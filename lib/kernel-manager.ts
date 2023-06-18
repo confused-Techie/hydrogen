@@ -9,17 +9,17 @@ import Kernel from "./kernel";
 import KernelPicker from "./kernel-picker";
 import store from "./store";
 import { getEditorDirectory, kernelSpecProvidesGrammar, log } from "./utils";
+import type { KernelspecMetadata } from "@nteract/types";
 
 export class KernelManager {
-  constructor() {
-    this.kernelSpecs = null;
-  }
+  kernelSpecs: Array<KernelspecMetadata> | null | undefined = null;
+  kernelPicker: KernelPicker | null | undefined;
 
   startKernelFor(
-    grammar,
-    editor,
-    filePath,
-    onStarted
+    grammar: Grammar,
+    editor: TextEditor,
+    filePath: string,
+    onStarted: (kernel: Kernel) => void
   ) {
     this.getKernelSpecForGrammar(grammar).then((kernelSpec) => {
       if (!kernelSpec) {
@@ -41,11 +41,11 @@ export class KernelManager {
   }
 
   startKernel(
-    kernelSpec,
-    grammar,
-    editor,
-    filePath,
-    onStarted
+    kernelSpec: KernelspecMetadata,
+    grammar: Grammar,
+    editor: TextEditor,
+    filePath: string,
+    onStarted?: ((kernel: Kernel) => void) | null | undefined
   ) {
     const displayName = kernelSpec.display_name;
     // if kernel startup already in progress don't start additional kernel
@@ -81,7 +81,7 @@ export class KernelManager {
     });
   }
 
-  async update() {
+  async update(): Promise<KernelspecMetadata[]> {
     const kernelSpecs = await kernelSpecsFindAll();
 
     const kernelResourcesDict = mapKeys(kernelSpecs, function (value, key) {
@@ -94,7 +94,7 @@ export class KernelManager {
     return this.kernelSpecs;
   }
 
-  async getAllKernelSpecs(grammar) {
+  async getAllKernelSpecs(grammar: Grammar | null | undefined) {
     if (this.kernelSpecs) {
       return this.kernelSpecs;
     }
@@ -102,8 +102,8 @@ export class KernelManager {
   }
 
   async getAllKernelSpecsForGrammar(
-    grammar
-  ) {
+    grammar: Grammar | null | undefined
+  ): Promise<KernelspecMetadata[]> {
     if (!grammar) {
       return [];
     }
@@ -113,7 +113,7 @@ export class KernelManager {
     );
   }
 
-  async getKernelSpecForGrammar(grammar) {
+  async getKernelSpecForGrammar(grammar: Grammar) {
     const kernelSpecs = await this.getAllKernelSpecsForGrammar(grammar);
 
     if (kernelSpecs.length <= 1) {
@@ -126,7 +126,7 @@ export class KernelManager {
       this.kernelPicker = new KernelPicker(kernelSpecs);
     }
 
-    return new Promise((resolve) => {
+    return new Promise<KernelspecMetadata>((resolve) => {
       if (!this.kernelPicker) {
         return resolve(null);
       }
@@ -137,7 +137,7 @@ export class KernelManager {
     });
   }
 
-  async updateKernelSpecs(grammar) {
+  async updateKernelSpecs(grammar?: Grammar | null | undefined) {
     const kernelSpecs = await this.update();
 
     if (kernelSpecs.length === 0) {

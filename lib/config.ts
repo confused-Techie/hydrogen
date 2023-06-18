@@ -1,5 +1,5 @@
 const Config = {
-  getJson(key, _default = {}) {
+  getJson(key: string, _default: Record<string, any> = {}) {
     const value = atom.config.get(`Hydrogen.${key}`);
     if (!value || typeof value !== "string") {
       return _default;

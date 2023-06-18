@@ -6,8 +6,10 @@ import {
   kernelSpecProvidesGrammar,
   setPreviouslyFocusedElement,
 } from "./utils";
+import type Kernel from "./kernel";
+import type { KernelspecMetadata } from "@nteract/types";
 
-function getName(kernel) {
+function getName(kernel: Kernel) {
   const prefix = kernel.transport.gatewayName
     ? `${kernel.transport.gatewayName}: `
     : "";
@@ -18,18 +20,22 @@ function getName(kernel) {
 }
 
 export default class ExistingKernelPicker {
+  kernelSpecs: Array<KernelspecMetadata>;
+  selectListView: SelectListView;
+  panel: Panel | null | undefined;
+  previouslyFocusedElement: HTMLElement | null | undefined;
 
   constructor() {
     this.selectListView = new SelectListView({
       itemsClassList: ["mark-active"],
-      items: [],
-      filterKeyForItem: (kernel) => getName(kernel),
-      elementForItem: (kernel) => {
+      items: [] as Kernel[],
+      filterKeyForItem: (kernel: Kernel) => getName(kernel),
+      elementForItem: (kernel: Kernel) => {
         const element = document.createElement("li");
         element.textContent = getName(kernel);
         return element;
       },
-      didConfirmSelection: (kernel) => {
+      didConfirmSelection: (kernel: Kernel) => {
         const { filePath, editor, grammar } = store;
         if (!filePath || !editor || !grammar) {
           return this.cancel();
@@ -79,7 +85,7 @@ export default class ExistingKernelPicker {
         items: store.runningKernels.filter((kernel) =>
           kernelSpecProvidesGrammar(kernel.kernelSpec, store.grammar)
         ),
-      });
+      } as SelectListProperties);
       const markers = store.markers;
       if (markers) {
         markers.clear();

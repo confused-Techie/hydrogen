@@ -2,11 +2,13 @@ import { TextEditor, Grammar } from "atom";
 import * as path from "path";
 import { promises } from "fs";
 const { readFile } = promises;
+import type { HydrogenCellType } from "./hydrogen";
 
 import { remote } from "electron";
 const { dialog } = remote;
 
 import { fromJS } from "@nteract/commutable";
+import type { Notebook, JSONObject, Cell } from "@nteract/commutable";
 import store from "./store";
 import { getCommentStartString } from "./code-manager";
 import { importResult, convertMarkdownToOutput } from "./result";
@@ -18,7 +20,7 @@ const linesep = process.platform === "win32" ? "\r\n" : "\n";
  *
  * @param {String} uri - Uri of the file to open.
  */
-export function ipynbOpener(uri) {
+export function ipynbOpener(uri: string) {
   if (
     path.extname(uri).toLowerCase() === ".ipynb" &&
     atom.config.get("Hydrogen.importNotebookURI") === true
@@ -37,7 +39,7 @@ export function ipynbOpener(uri) {
  *
  * @param {Event} event - Atom Event from clicking in a treeview.
  */
-export function importNotebook(event) {
+export function importNotebook(event?: CustomEvent) {
   // Use selected filepath if called from tree-view context menu
   const filenameFromTreeView = event.target.dataset?.path;
 
@@ -58,7 +60,7 @@ export function importNotebook(event) {
         },
       ],
     },
-    (filenames) => {
+    (filenames: Array<string> | null | undefined) => {
       if (!filenames) {
         atom.notifications.addError("No filenames selected");
         return;
@@ -88,8 +90,8 @@ export function importNotebook(event) {
  * @param {Boolean} importResults - Decides whether to display previous results
  */
 export async function _loadNotebook(
-  filename,
-  importResults = false
+  filename: string,
+  importResults: boolean = false
 ) {
   let data;
   let nb;
@@ -158,7 +160,7 @@ export async function _loadNotebook(
  * @param {Notebook} nb - The Notebook to determine the Atom Grammar of.
  * @returns {Grammar} - The grammar of the notebook.
  */
-function getGrammarForNotebook(nb) {
+function getGrammarForNotebook(nb: Notebook) {
   const metaData = nb.metadata;
   const {
     kernelspec,
@@ -229,7 +231,7 @@ function getGrammarForNotebook(nb) {
  * @param {String} name - The language name to find a grammar for.
  * @returns {Grammar} - The matching Atom Grammar.
  */
-function getGrammarForLanguageName(name) {
+function getGrammarForLanguageName(name: string) {
   if (!name) {
     return null;
   }
@@ -256,7 +258,7 @@ function getGrammarForLanguageName(name) {
  * @param {String} ext - The file extension to find a grammar for.
  * @returns {Grammar} - The matching Atom Grammar.
  */
-function getGrammarForFileExtension(ext) {
+function getGrammarForFileExtension(ext: string): Grammar | null | undefined {
   if (!ext) {
     return null;
   }
@@ -273,7 +275,7 @@ function getGrammarForFileExtension(ext) {
  * @param {String} name - The KernelspecMetadata name to find a grammar for.
  * @returns {Grammar} - The matching Atom Grammar.
  */
-function getGrammarForKernelspecName(name) {
+function getGrammarForKernelspecName(name: string): Grammar | null | undefined {
   // Check if there exists an Atom grammar named source.${name}
   const grammar = getGrammarForLanguageName(name);
   if (grammar) {
@@ -301,9 +303,13 @@ function getGrammarForKernelspecName(name) {
  * @returns {Object} - A Hydrogen Code Block.
  */
 function toHydrogenCodeBlock(
-  cell,
-  commentStartString
-) {
+  cell: Cell,
+  commentStartString: string
+): {
+  cellType: HydrogenCellType;
+  code: string;
+  row: number;
+} {
   const cellType = cell.cell_type === "markdown" ? "markdown" : "codecell";
   const cellHeader = getCellHeader(commentStartString, cellType);
   let source = cell.source;
@@ -333,8 +339,8 @@ function toHydrogenCodeBlock(
  * @returns {String} - A Hydrogen Cell Header.
  */
 function getCellHeader(
-  commentStartString,
-  keyword
+  commentStartString: string,
+  keyword: string | null | undefined
 ) {
   const marker = `${commentStartString}%% `;
   return keyword ? marker + keyword : marker;
@@ -349,9 +355,9 @@ function getCellHeader(
  * @param {Number[]} resultRows - The rows to display the results on.
  */
 function importNotebookResults(
-  editor,
-  nbCells,
-  resultRows
+  editor: TextEditor,
+  nbCells: Array<Cell>,
+  resultRows: Array<number>
 ) {
   if (nbCells.length != resultRows.length) {
     return;

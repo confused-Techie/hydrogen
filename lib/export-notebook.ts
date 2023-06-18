@@ -23,7 +23,7 @@ export async function exportNotebook() {
   }
 }
 
-async function saveNoteBook(filePath) {
+async function saveNoteBook(filePath: string) {
   if (filePath.length === 0) {
     return;
   }

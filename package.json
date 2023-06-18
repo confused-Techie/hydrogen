@@ -40,7 +40,7 @@
     "lint": "eslint . --fix",
     "test.lint": "eslint .",
     "build.test": "npm run build && npm run test",
-    "test": "echo 'test without rebuilding' && pulsar --test spec",
+    "test": "echo 'test without rebuilding' && atom --test spec",
     "clean": "shx rm -rf dist",
     "clean.prod": "shx rm -rf ./dist/**/*.d.ts ./dist/tsconfig.tsbuildinfo",
     "dev": "npm run clean && tsc -p lib/tsconfig.json --watch",
