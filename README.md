@@ -1,3 +1,32 @@
+# WARNING:
+
+As Pulsar users have had a great deal of trouble with Hydrogen, but everyone seems to love it, I've decided to try my hand at fixing it.
+
+My Goals:
+  - Make it Maintainable
+  - Make it Functional
+  - Keep it updated with Pulsar
+
+My Issues:
+  - I've never ever used Hydrogen
+  - I've never ever used Jypter Notebook or Friends
+  - I really don't like TypeScript & FlowJS
+
+What this Means:
+  - I'm preforming a rather rude hostile takeover on the code here, I can't say if it'll work, or be helpful.
+  - I'm really really trusting the tests here. I know the current maintainer is fantastic about relying on tests. So let's hope the same is true here.
+
+I'm trying to remove any and all fancy build tools, and get it back to standard JavaScript, by just taking the `dist` ugly output, and prettifying it.
+
+Install:
+
+You can't install this like a regular modules (of course):
+
+- apm install
+- npx electron-rebuild -v 12.2.3
+- node run build
+- npm run test
+
 # Hydrogen <img src="https://cdn.jsdelivr.net/gh/nteract/hydrogen@17eda24547a2195b4a21c883af3dd12ec50bd442/static/animate-logo.svg" alt="hydrogen animated logo" height="50px" align="right" />
 
 [![CI](https://github.com/nteract/hydrogen/actions/workflows/CI.yml/badge.svg)](https://github.com/nteract/hydrogen/actions/workflows/CI.yml)
@@ -14,7 +43,7 @@ Atom is [sunsetted](https://github.blog/2022-06-08-sunsetting-atom/).  It is not
 
 You can export `ipynb` from Hydrogen using [this method](https://github.com/nteract/hydrogen/blob/master/docs/Usage/NotebookFiles.md#notebook-export) and migrate to the following alternatives:
 
-- Nteract, which is directly inspired by Hydrogen. 
+- Nteract, which is directly inspired by Hydrogen.
 https://nteract.io/
 
 - VsCode with its Jupyter integration
