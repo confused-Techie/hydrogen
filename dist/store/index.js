@@ -1,6 +1,6 @@
 const { TextEditor, CompositeDisposable, File, Grammar } = require("atom");
 const { observable, computed, action, keys } = require("mobx");
-const { isMultilanguageGrammar, getEmbeddedScope, isUnsavedFilePath } = require("../utils");
+const { isMultilanguageGrammar, getEmbeddedScope, isUnsavedFilePath } = require("../utils.js");
 const codeManager = require("../code-manager");
 const MarkerStore = require("./markers");
 const Kernel = require("../kernel");
