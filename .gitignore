@@ -11,5 +11,4 @@ package-lock.json
 .ropeproject/
 
 # Build directories
-dist
 .parcel-cache/

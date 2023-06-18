@@ -1,4 +1,14 @@
-"use strict";
+/**
+ * Adapted from
+ * https://github.com/nteract/nteract/blob/master/packages/outputs/src/components/media/markdown.tsx
+ * Copyright (c) 2016 - present, nteract contributors All rights reserved.
+ *
+ * This source code is licensed under the license found in the LICENSE file in
+ * the root directory of this source tree.
+ *
+ * @NOTE: This `Markdown` component could be used exactly same as the original `Media.Markdown` component of @nteract/outputs,
+ *        except that this file adds a class name to it for further stylings in styles/hydrogen.less.
+ */
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -14,8 +24,12 @@ class Markdown extends react_1.default.PureComponent {
 }
 exports.Markdown = Markdown;
 Markdown.defaultProps = {
+  /** Markdown text. */
     data: "",
+    /**
+     * Media type. Defaults to `text/markdown`. For more on media types, see:
+     * https://www.w3.org/TR/CSS21/media.html%23media-types.
+     */
     mediaType: "text/markdown",
 };
 exports.default = Markdown;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoibWFya2Rvd24uanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9saWIvY29tcG9uZW50cy9yZXN1bHQtdmlldy9tYXJrZG93bi50c3giXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7O0FBV0EsaUVBQWtEO0FBQ2xELGtEQUEwQjtBQVcxQixNQUFhLFFBQVMsU0FBUSxlQUFLLENBQUMsYUFBb0I7SUFNdEQsTUFBTTtRQUNKLE9BQU8sQ0FDTCx1Q0FBSyxTQUFTLEVBQUMsVUFBVTtZQUN2Qiw4QkFBQyxrQkFBaUIsSUFBQyxNQUFNLEVBQUUsSUFBSSxDQUFDLEtBQUssQ0FBQyxJQUFJLEdBQUksQ0FDMUMsQ0FDUCxDQUFDO0lBQ0osQ0FBQzs7QUFaSCw0QkFhQztBQVpRLHFCQUFZLEdBQUc7SUFDcEIsSUFBSSxFQUFFLEVBQUU7SUFDUixTQUFTLEVBQUUsZUFBZTtDQUMzQixDQUFDO0FBVUosa0JBQWUsUUFBUSxDQUFDIiwic291cmNlc0NvbnRlbnQiOlsiLyoqXG4gKiBBZGFwdGVkIGZyb21cbiAqIGh0dHBzOi8vZ2l0aHViLmNvbS9udGVyYWN0L250ZXJhY3QvYmxvYi9tYXN0ZXIvcGFja2FnZXMvb3V0cHV0cy9zcmMvY29tcG9uZW50cy9tZWRpYS9tYXJrZG93bi50c3hcbiAqIENvcHlyaWdodCAoYykgMjAxNiAtIHByZXNlbnQsIG50ZXJhY3QgY29udHJpYnV0b3JzIEFsbCByaWdodHMgcmVzZXJ2ZWQuXG4gKlxuICogVGhpcyBzb3VyY2UgY29kZSBpcyBsaWNlbnNlZCB1bmRlciB0aGUgbGljZW5zZSBmb3VuZCBpbiB0aGUgTElDRU5TRSBmaWxlIGluXG4gKiB0aGUgcm9vdCBkaXJlY3Rvcnkgb2YgdGhpcyBzb3VyY2UgdHJlZS5cbiAqXG4gKiBATk9URTogVGhpcyBgTWFya2Rvd25gIGNvbXBvbmVudCBjb3VsZCBiZSB1c2VkIGV4YWN0bHkgc2FtZSBhcyB0aGUgb3JpZ2luYWwgYE1lZGlhLk1hcmtkb3duYCBjb21wb25lbnQgb2YgQG50ZXJhY3Qvb3V0cHV0cyxcbiAqICAgICAgICBleGNlcHQgdGhhdCB0aGlzIGZpbGUgYWRkcyBhIGNsYXNzIG5hbWUgdG8gaXQgZm9yIGZ1cnRoZXIgc3R5bGluZ3MgaW4gc3R5bGVzL2h5ZHJvZ2VuLmxlc3MuXG4gKi9cbmltcG9ydCBNYXJrZG93bkNvbXBvbmVudCBmcm9tIFwiQG50ZXJhY3QvbWFya2Rvd25cIjtcbmltcG9ydCBSZWFjdCBmcm9tIFwicmVhY3RcIjtcbmludGVyZmFjZSBQcm9wcyB7XG4gIC8qKiBNYXJrZG93biB0ZXh0LiAqL1xuICBkYXRhOiBzdHJpbmc7XG5cbiAgLyoqXG4gICAqIE1lZGlhIHR5cGUuIERlZmF1bHRzIHRvIGB0ZXh0L21hcmtkb3duYC4gRm9yIG1vcmUgb24gbWVkaWEgdHlwZXMsIHNlZTpcbiAgICogaHR0cHM6Ly93d3cudzMub3JnL1RSL0NTUzIxL21lZGlhLmh0bWwlMjNtZWRpYS10eXBlcy5cbiAgICovXG4gIG1lZGlhVHlwZTogXCJ0ZXh0L21hcmtkb3duXCI7XG59XG5leHBvcnQgY2xhc3MgTWFya2Rvd24gZXh0ZW5kcyBSZWFjdC5QdXJlQ29tcG9uZW50PFByb3BzPiB7XG4gIHN0YXRpYyBkZWZhdWx0UHJvcHMgPSB7XG4gICAgZGF0YTogXCJcIixcbiAgICBtZWRpYVR5cGU6IFwidGV4dC9tYXJrZG93blwiLFxuICB9O1xuXG4gIHJlbmRlcigpIHtcbiAgICByZXR1cm4gKFxuICAgICAgPGRpdiBjbGFzc05hbWU9XCJtYXJrZG93blwiPlxuICAgICAgICA8TWFya2Rvd25Db21wb25lbnQgc291cmNlPXt0aGlzLnByb3BzLmRhdGF9IC8+XG4gICAgICA8L2Rpdj5cbiAgICApO1xuICB9XG59XG5leHBvcnQgZGVmYXVsdCBNYXJrZG93bjtcbiJdfQ==

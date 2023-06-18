@@ -1,4 +1,4 @@
-"use strict";
+
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -9,4 +9,41 @@ exports.default = {
     consumed: consumed_1.default,
     provided: provided_1.default,
 };
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9saWIvc2VydmljZXMvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7Ozs7QUFBQSwwREFBa0M7QUFDbEMsMERBQWtDO0FBQ2xDLGtCQUFlO0lBQ2IsUUFBUSxFQUFSLGtCQUFRO0lBQ1IsUUFBUSxFQUFSLGtCQUFRO0NBQ1QsQ0FBQyIsInNvdXJjZXNDb250ZW50IjpbImltcG9ydCBjb25zdW1lZCBmcm9tIFwiLi9jb25zdW1lZFwiO1xuaW1wb3J0IHByb3ZpZGVkIGZyb20gXCIuL3Byb3ZpZGVkXCI7XG5leHBvcnQgZGVmYXVsdCB7XG4gIGNvbnN1bWVkLFxuICBwcm92aWRlZCxcbn07XG4vKipcbiAqICMgSHlkcm9nZW4gPGltZyBzcmM9XCJodHRwczovL2Nkbi5yYXdnaXQuY29tL250ZXJhY3QvaHlkcm9nZW4vMTdlZGEyNDUvc3RhdGljL2FuaW1hdGUtbG9nby5zdmdcIiBhbHQ9XCJoeWRyb2dlbiBhbmltYXRlZCBsb2dvXCIgaGVpZ2h0PVwiNTBweFwiIGFsaWduPVwicmlnaHRcIiAvPlxuICpcbiAqICMjIFNlcnZpY2VzIEFQSVxuICpcbiAqIFRoZSBbQXRvbSBTZXJ2aWNlc1xuICogQVBJXShodHRwczovL2ZsaWdodC1tYW51YWwuYXRvbS5pby9iZWhpbmQtYXRvbS9zZWN0aW9ucy9pbnRlcmFjdGluZy13aXRoLW90aGVyLXBhY2thZ2VzLXZpYS1zZXJ2aWNlcy8pXG4gKiBpcyBhIHdheSBmb3IgQXRvbSBwYWNrYWdlcyB0byBpbnRlcmFjdCB3aXRoIGVhY2ggb3RoZXIuIEh5ZHJvZ2VuIGJvdGhcbiAqIHByb3ZpZGVzIGFuZCBjb25zdW1lcyBfc2VydmljZXNfIHRvIGFkZCBhZGRpdGlvbmFsIGZlYXR1cmVzIHRvIGl0c2VsZi5cbiAqIGAuL2xpYi9zZXJ2aWNlc2AgaXMgb3VyIGNvbnRhaW5lciBmb2xkZXIgZm9yIGFueXRoaW5nIHRoYXQgZnVuY3Rpb25zIHRocm91Z2hcbiAqIHRoZSBbQXRvbSBTZXJ2aWNlc1xuICogQVBJXShodHRwczovL2ZsaWdodC1tYW51YWwuYXRvbS5pby9iZWhpbmQtYXRvbS9zZWN0aW9ucy9pbnRlcmFjdGluZy13aXRoLW90aGVyLXBhY2thZ2VzLXZpYS1zZXJ2aWNlcy8pLlxuICogSWYgdGhlIHNlcnZpY2UgaXMgY29uc2lkZXJlZCBhIF9wcm92aWRlZCBzZXJ2aWNlXywgdGhlbiBpdCBpcyBsb2NhdGVkIGluc2lkZVxuICogb2YgYC4vbGliL3NlcnZpY2VzL3Byb3ZpZGVkYC4gSWYgdGhlIHNlcnZpY2UsIGhvd2V2ZXIsIGlzIGNvbnNpZGVyZWQgYVxuICogX2NvbnN1bWVkIHNlcnZpY2VfLCB0aGVuIGl0IGlzIGxvY2F0ZWQgaW5zaWRlIG9mIGAuL2xpYi9zZXJ2aWNlcy9jb25zdW1lZGAuXG4gKlxuICogIyMjIENvbnN1bWVkIFNlcnZpY2VzXG4gKlxuICogLSBbU3RhdHVzIEJhciBUaWxlOiBgc3RhdHVzLWJhcmBdKC4vY29uc3VtZWQvc3RhdHVzLWJhci9zdGF0dXMtYmFyLmpzKVxuICpcbiAqICAgLSBUaGlzIGFsbG93cyB1cyB0byBhZGQga2VybmVsIGNvbnRyb2xzIHRvIHRoZSBzdGF0dXMgYmFyLlxuICogLSBbQXV0b2NvbXBsZXRlIEZvciBBbnkgRWRpdG9yOiBgYXV0b2NvbXBsZXRlLXBsdXNgXSguL2NvbnN1bWVkL2F1dG9jb21wbGV0ZS5qcylcbiAqXG4gKiAgIC0gVGhpcyBhbGxvd3MgdXMgdG8gYWRkIGF1dG9jb21wbGV0ZSB0byB0aGluZ3MgbGlrZSB3YXRjaGVzLlxuICpcbiAqICMjIyBQcm92aWRlZCBTZXJ2aWNlc1xuICpcbiAqIC0gW0F1dG9jb21wbGV0ZSBSZXN1bHRzOiBgYXV0b2NvbXBsZXRlLXBsdXNgXSguL3Byb3ZpZGVkL2F1dG9jb21wbGV0ZS5qcylcbiAqXG4gKiAgIC0gVGhpcyBhbGxvd3MgdXMgdG8gcHJvdmlkZSBhdXRvY29tcGxldGUgcmVzdWx0cyB0aGF0IGFyZSBzaW1pbGlhciB0byBqdXB5dGVyJ3NcbiAqICAgICAgIHRhYiBjb21wbGV0aW9uLlxuICpcbiAqICMjIExpY2Vuc2VcbiAqXG4gKiBUaGlzIHByb2plY3QgaXMgbGljZW5zZWQgdW5kZXIgdGhlIE1JVCBMaWNlbnNlIC0gc2VlIHRoZVxuICogW0xJQ0VOU0UubWRdKGh0dHBzOi8vZ2l0aHViLmNvbS9udGVyYWN0L2h5ZHJvZ2VuL2Jsb2IvbWFzdGVyL0xJQ0VOU0UubWQpIGZpbGVcbiAqIGZvciBkZXRhaWxzLlxuICovXG4iXX0=
+/**
+ * # Hydrogen <img src="https://cdn.rawgit.com/nteract/hydrogen/17eda245/static/animate-logo.svg" alt="hydrogen animated logo" height="50px" align="right" />
+ *
+ * ## Services API
+ *
+ * The [Atom Services
+ * API](https://flight-manual.atom.io/behind-atom/sections/interacting-with-other-packages-via-services/)
+ * is a way for Atom packages to interact with each other. Hydrogen both
+ * provides and consumes _services_ to add additional features to itself.
+ * `./lib/services` is our container folder for anything that functions through
+ * the [Atom Services
+ * API](https://flight-manual.atom.io/behind-atom/sections/interacting-with-other-packages-via-services/).
+ * If the service is considered a _provided service_, then it is located inside
+ * of `./lib/services/provided`. If the service, however, is considered a
+ * _consumed service_, then it is located inside of `./lib/services/consumed`.
+ *
+ * ### Consumed Services
+ *
+ * - [Status Bar Tile: `status-bar`](./consumed/status-bar/status-bar.js)
+ *
+ *   - This allows us to add kernel controls to the status bar.
+ * - [Autocomplete For Any Editor: `autocomplete-plus`](./consumed/autocomplete.js)
+ *
+ *   - This allows us to add autocomplete to things like watches.
+ *
+ * ### Provided Services
+ *
+ * - [Autocomplete Results: `autocomplete-plus`](./provided/autocomplete.js)
+ *
+ *   - This allows us to provide autocomplete results that are similiar to jupyter's
+ *       tab completion.
+ *
+ * ## License
+ *
+ * This project is licensed under the MIT License - see the
+ * [LICENSE.md](https://github.com/nteract/hydrogen/blob/master/LICENSE.md) file
+ * for details.
+ */
