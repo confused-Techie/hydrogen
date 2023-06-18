@@ -3,7 +3,6 @@
  * and exposes a small set of methods that should be usable by plugins.
  * @class HydrogenKernel
  */
-Object.defineProperty(exports, "__esModule", { value: true });
 class HydrogenKernel {
   constructor(_kernel) {
     this._kernel = _kernel;
@@ -75,4 +74,5 @@ class HydrogenKernel {
     return connectionFile;
   }
 }
-exports.default = HydrogenKernel;
+
+module.exports = HydrogenKernel;

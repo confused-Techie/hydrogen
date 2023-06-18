@@ -1,4 +1,3 @@
-Object.defineProperty(exports, "__esModule", { value: true });
 class MarkerStore {
   constructor() {
     this.markers = new Map();
@@ -29,4 +28,5 @@ class MarkerStore {
     this.markers.delete(key);
   }
 }
-exports.default = MarkerStore;
+
+module.exports = MarkerStore;

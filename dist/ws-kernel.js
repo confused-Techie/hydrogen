@@ -1,13 +1,9 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const kernel_transport_1 = __importDefault(require("./kernel-transport"));
-const input_view_1 = __importDefault(require("./input-view"));
-const utils_1 = require("./utils");
-class WSKernel extends kernel_transport_1.default {
+const { Grammar } = require("atom");
+const KernelTransport = require("./kernel-transport");
+const InputView = require("./input-view");
+const { log, js_idx_to_char_idx } = require("./utils");
+
+class WSKernel extends KernelTransport {
   constructor(gatewayName, kernelSpec, grammar, session) {
     super(kernelSpec, grammar);
     this.session = session;
@@ -17,16 +13,16 @@ class WSKernel extends kernel_transport_1.default {
     );
     this.setExecutionState(this.session.status); // Set initial status correctly
   }
+
   interrupt() {
     this.session.kernel.interrupt();
   }
+
   async shutdown() {
     // TODO 'shutdown' does not exist on type 'IKernelConnection'
-    var _a;
-    await ((_a = this.session.shutdown()) !== null && _a !== void 0
-      ? _a
-      : this.session.kernel.shutdown());
+    await (this.session.shutdown() ?? this.session.kernel.shutdown());
   }
+
   restart(onRestarted) {
     const future = this.session.kernel.restart();
     future.then(() => {
@@ -40,7 +36,7 @@ class WSKernel extends kernel_transport_1.default {
       code,
     });
     future.onIOPub = (message) => {
-      (0, utils_1.log)("WSKernel: execute:", message);
+      log("WSKernel: execute:", message);
       onResults(message, "iopub");
     };
     future.onReply = (message) => onResults(message, "shell");
@@ -50,7 +46,7 @@ class WSKernel extends kernel_transport_1.default {
     this.session.kernel
       .requestComplete({
         code,
-        cursor_pos: (0, utils_1.js_idx_to_char_idx)(code.length, code),
+        cursor_pos: js_idx_to_char_idx(code.length, code),
       })
       .then((message) => onResults(message, "shell"));
   }
@@ -69,7 +65,7 @@ class WSKernel extends kernel_transport_1.default {
     });
   }
   promptRename() {
-    const view = new input_view_1.default(
+    const view = new InputView(
       {
         prompt: "Name your current session",
         defaultText: this.session.path,
@@ -80,9 +76,10 @@ class WSKernel extends kernel_transport_1.default {
     view.attach();
   }
   destroy() {
-    (0, utils_1.log)("WSKernel: destroying jupyter-js-services Session");
+    log("WSKernel: destroying jupyter-js-services Session");
     this.session.dispose();
     super.destroy();
   }
 }
-exports.default = WSKernel;
+
+module.exports = WSKernel;

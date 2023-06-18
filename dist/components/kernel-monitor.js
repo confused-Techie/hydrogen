@@ -1,71 +1,27 @@
-var __createBinding =
-  (this && this.__createBinding) ||
-  (Object.create
-    ? function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (
-          !desc ||
-          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
-        ) {
-          desc = {
-            enumerable: true,
-            get: function () {
-              return m[k];
-            },
-          };
-        }
-        Object.defineProperty(o, k2, desc);
-      }
-    : function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-      });
-var __setModuleDefault =
-  (this && this.__setModuleDefault) ||
-  (Object.create
-    ? function (o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }
-    : function (o, v) {
-        o["default"] = v;
-      });
-var __importStar =
-  (this && this.__importStar) ||
-  function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null)
-      for (var k in mod)
-        if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
-          __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-  };
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const react_1 = __importDefault(require("react"));
-const react_table_1 = __importStar(require("react-table"));
-const mobx_react_1 = require("mobx-react");
-const tildify_1 = __importDefault(require("tildify"));
-const utils_1 = require("../utils");
+const React = require("react");
+const ReactTable = require("react-table");
+const { ReactTableDefaults } = require("react-table");
+const { observer } = require("mobx-react");
+const tildify = require("tildify");
+const Kernel = require("../kernel.js");
+const { isUnsavedFilePath } = require("../utils");
+
 const showKernelSpec = (kernelSpec) => {
   atom.notifications.addInfo("Hydrogen: Kernel Spec", {
     detail: JSON.stringify(kernelSpec, null, 2),
     dismissable: true,
   });
 };
+
 const interrupt = (kernel) => {
   kernel.interrupt();
 };
+
 const shutdown = (kernel) => {
   kernel.shutdown();
   kernel.destroy();
 };
+
 const restart = (kernel) => {
   kernel.restart(undefined);
 };
@@ -102,7 +58,7 @@ const openEditor = (filePath) => {
 };
 const kernelInfoCell = (props) => {
   const { displayName, kernelSpec } = props.value;
-  return react_1.default.createElement(
+  return React.createElement(
     "a",
     {
       className: "icon",
@@ -114,23 +70,23 @@ const kernelInfoCell = (props) => {
   );
 };
 // Set default properties of React-Table
-Object.assign(react_table_1.ReactTableDefaults, {
+Object.assign(ReactTableDefaults, {
   className: "kernel-monitor",
   showPagination: false,
 });
-Object.assign(react_table_1.ReactTableDefaults.column, {
+Object.assign(ReactTableDefaults.column, {
   className: "table-cell",
   headerClassName: "table-header",
   style: {
     textAlign: "center",
   },
 });
-const KernelMonitor = (0, mobx_react_1.observer)(({ store }) => {
+const KernelMonitor = observer(({ store }) => {
   if (store.runningKernels.length === 0) {
-    return react_1.default.createElement(
+    return React.createElement(
       "ul",
       { className: "background-message centered" },
-      react_1.default.createElement("li", null, "No running kernels")
+      React.createElement("li", null, "No running kernels")
     );
   }
   const data = store.runningKernels.map((kernel, key) => {
@@ -189,19 +145,19 @@ const KernelMonitor = (0, mobx_react_1.observer)(({ store }) => {
       Cell: (props) => {
         const { kernel, key } = props.value;
         return [
-          react_1.default.createElement("a", {
+          React.createElement("a", {
             className: "icon icon-zap",
             onClick: interrupt.bind(this, kernel),
             title: "Interrupt kernel",
             key: `${key}interrupt`,
           }),
-          react_1.default.createElement("a", {
+          React.createElement("a", {
             className: "icon icon-sync",
             onClick: restart.bind(this, kernel),
             title: "Restart kernel",
             key: `${key}restart`,
           }),
-          react_1.default.createElement("a", {
+          React.createElement("a", {
             className: "icon icon-trashcan",
             onClick: shutdown.bind(this, kernel),
             title: "Shutdown kernel",
@@ -217,8 +173,8 @@ const KernelMonitor = (0, mobx_react_1.observer)(({ store }) => {
       Cell: (props) => {
         return props.value.map((filePath, index) => {
           const separator = index === 0 ? "" : "  |  ";
-          const body = (0, utils_1.isUnsavedFilePath)(filePath)
-            ? react_1.default.createElement(
+          const body = isUnsavedFilePath(filePath)
+            ? React.createElement(
                 "a",
                 {
                   onClick: openUnsavedEditor.bind(this, filePath),
@@ -227,16 +183,16 @@ const KernelMonitor = (0, mobx_react_1.observer)(({ store }) => {
                 },
                 filePath
               )
-            : react_1.default.createElement(
+            : React.createElement(
                 "a",
                 {
                   onClick: openEditor.bind(this, filePath),
                   title: "Jump to file",
                   key: `${filePath}jump`,
                 },
-                (0, tildify_1.default)(filePath)
+                tildify(filePath)
               );
-          return react_1.default.createElement(
+          return React.createElement(
             "div",
             {
               style: {
@@ -255,10 +211,11 @@ const KernelMonitor = (0, mobx_react_1.observer)(({ store }) => {
       },
     },
   ];
-  return react_1.default.createElement(react_table_1.default, {
+  return React.createElement(ReactTable, {
     data: data,
     columns: columns,
   });
 });
+
 KernelMonitor.displayName = "KernelMonitor";
-exports.default = KernelMonitor;
+module.exports = KernelMonitor;

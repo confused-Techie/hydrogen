@@ -1,11 +1,7 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const store_1 = __importDefault(require("../store"));
-const code_manager_1 = require("../code-manager");
+const { TextEditor, Range, Emitter } = require("atom");
+const store = require("../store");
+const { getCurrentCell } = require("../code-manager");
+
 /**
  * @version 1.0.0 The Plugin API allows you to make Hydrogen awesome. You will
  *   be able to interact with this class in your Hydrogen Plugin using Atom's
@@ -40,13 +36,13 @@ class HydrogenProvider {
    * @return {Class} `HydrogenKernel`
    */
   getActiveKernel() {
-    if (!store_1.default.kernel) {
-      const grammar = store_1.default.editor
-        ? store_1.default.editor.getGrammar().name
+    if (!store.kernel) {
+      const grammar = store.editor
+        ? store.editor.getGrammar().name
         : "";
       throw new Error(`No running kernel for grammar \`${grammar}\` found`);
     }
-    return store_1.default.kernel.getPluginWrapper();
+    return store.kernel.getPluginWrapper();
   }
 
   /*
@@ -55,10 +51,11 @@ class HydrogenProvider {
    * @return {Class} `Range`
    */
   getCellRange(editor) {
-    if (!store_1.default.editor) {
+    if (!store.editor) {
       return null;
     }
-    return (0, code_manager_1.getCurrentCell)(store_1.default.editor);
+    return getCurrentCell(store.editor);
   }
 }
-exports.default = HydrogenProvider;
+
+module.exports = HydrogenProvider;

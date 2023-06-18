@@ -1,44 +1,14 @@
-var __decorate =
-  (this && this.__decorate) ||
-  function (decorators, target, key, desc) {
-    var c = arguments.length,
-      r =
-        c < 3
-          ? target
-          : desc === null
-          ? (desc = Object.getOwnPropertyDescriptor(target, key))
-          : desc,
-      d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
-      r = Reflect.decorate(decorators, target, key, desc);
-    else
-      for (var i = decorators.length - 1; i >= 0; i--)
-        if ((d = decorators[i]))
-          r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-  };
-var __metadata =
-  (this && this.__metadata) ||
-  function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
-      return Reflect.metadata(k, v);
-  };
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const react_1 = __importDefault(require("react"));
-const mathjax_1 = require("@nteract/mathjax");
-const mathjax_electron_1 = require("mathjax-electron");
-const mobx_1 = require("mobx");
-const mobx_react_1 = require("mobx-react");
-const anser_1 = __importDefault(require("anser"));
-const history_1 = __importDefault(require("./result-view/history"));
-const list_1 = __importDefault(require("./result-view/list"));
-const utils_1 = require("../utils");
-let OutputArea = class OutputArea extends react_1.default.Component {
+const React = require("react");
+const { Provider } = require("@nteract/mathjax");
+const { mathJaxPath } = require("mathjax-electron");
+const { action, observable } = require("mobx");
+const { observer } = require("mobx-react");
+const Anser = require("anser");
+const History = require("./result-view/history.js");
+const ScrollList = require("./result-view/list.js");
+const { OUTPUT_AREA_URI, EmptyMessage } = require("../utils");
+
+let OutputArea = class OutputArea extends React.Component {
   constructor() {
     super(...arguments);
     this.showHistory = true;
@@ -56,7 +26,7 @@ let OutputArea = class OutputArea extends react_1.default.Component {
       const output = kernel.outputStore.outputs[kernel.outputStore.index];
       const copyOutput = this.getOutputText(output);
       if (copyOutput) {
-        atom.clipboard.write(anser_1.default.ansiToText(copyOutput));
+        atom.clipboard.write(Anser.ansiToText(copyOutput));
         atom.notifications.addSuccess("Copied to clipboard");
       } else {
         atom.notifications.addWarning("Nothing to copy");
@@ -77,38 +47,38 @@ let OutputArea = class OutputArea extends react_1.default.Component {
     const kernel = this.props.store.kernel;
     if (!kernel) {
       if (atom.config.get("Hydrogen.outputAreaDock")) {
-        return react_1.default.createElement(utils_1.EmptyMessage, null);
+        return React.createElement(EmptyMessage, null);
       }
-      atom.workspace.hide(utils_1.OUTPUT_AREA_URI);
+      atom.workspace.hide(OUTPUT_AREA_URI);
       return null;
     }
-    return react_1.default.createElement(
-      mathjax_1.Provider,
-      { src: mathjax_electron_1.mathJaxPath },
-      react_1.default.createElement(
+    return React.createElement(
+      Provider,
+      { src: mathJaxPath },
+      React.createElement(
         "div",
         { className: "sidebar output-area" },
         kernel.outputStore.outputs.length > 0
-          ? react_1.default.createElement(
+          ? React.createElement(
               "div",
               { className: "block" },
-              react_1.default.createElement(
+              React.createElement(
                 "div",
                 { className: "btn-group" },
-                react_1.default.createElement("button", {
+                React.createElement("button", {
                   className: `btn icon icon-clock${
                     this.showHistory ? " selected" : ""
                   }`,
                   onClick: this.setHistory,
                 }),
-                react_1.default.createElement("button", {
+                React.createElement("button", {
                   className: `btn icon icon-three-bars${
                     !this.showHistory ? " selected" : ""
                   }`,
                   onClick: this.setScrollList,
                 })
               ),
-              react_1.default.createElement(
+              React.createElement(
                 "div",
                 {
                   style: {
@@ -116,7 +86,7 @@ let OutputArea = class OutputArea extends react_1.default.Component {
                   },
                 },
                 this.showHistory
-                  ? react_1.default.createElement(
+                  ? React.createElement(
                       "button",
                       {
                         className: "btn icon icon-clippy",
@@ -125,7 +95,7 @@ let OutputArea = class OutputArea extends react_1.default.Component {
                       "Copy"
                     )
                   : null,
-                react_1.default.createElement(
+                React.createElement(
                   "button",
                   {
                     className: "btn icon icon-trashcan",
@@ -135,35 +105,17 @@ let OutputArea = class OutputArea extends react_1.default.Component {
                 )
               )
             )
-          : react_1.default.createElement(utils_1.EmptyMessage, null),
+          : React.createElement(EmptyMessage, null),
         this.showHistory
-          ? react_1.default.createElement(history_1.default, {
+          ? React.createElement(History, {
               store: kernel.outputStore,
             })
-          : react_1.default.createElement(list_1.default, {
+          : React.createElement(ScrollList, {
               outputs: kernel.outputStore.outputs,
             })
       )
     );
   }
 };
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Boolean)],
-  OutputArea.prototype,
-  "showHistory",
-  void 0
-);
-__decorate(
-  [mobx_1.action, __metadata("design:type", Object)],
-  OutputArea.prototype,
-  "setHistory",
-  void 0
-);
-__decorate(
-  [mobx_1.action, __metadata("design:type", Object)],
-  OutputArea.prototype,
-  "setScrollList",
-  void 0
-);
-OutputArea = __decorate([mobx_react_1.observer], OutputArea);
-exports.default = OutputArea;
+
+module.exports = OutputArea;

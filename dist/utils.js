@@ -1,63 +1,42 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.setPreviouslyFocusedElement =
-  exports.char_idx_to_js_idx =
-  exports.js_idx_to_char_idx =
-  exports.executionTime =
-  exports.EmptyMessage =
-  exports.rowRangeForCodeFoldAtBufferRow =
-  exports.hotReloadPackage =
-  exports.log =
-  exports.getEditorDirectory =
-  exports.getEmbeddedScope =
-  exports.kernelSpecProvidesGrammar =
-  exports.isUnsavedFilePath =
-  exports.isMultilanguageGrammar =
-  exports.msgSpecV4toV5 =
-  exports.msgSpecToNotebookFormat =
-  exports.grammarToLanguage =
-  exports.openOrShowDock =
-  exports.focus =
-  exports.reactFactory =
-  exports.NO_EXECTIME_STRING =
-  exports.KERNEL_MONITOR_URI =
-  exports.OUTPUT_AREA_URI =
-  exports.WATCHES_URI =
-  exports.INSPECTOR_URI =
-    void 0;
-const atom_1 = require("atom");
-const react_1 = __importDefault(require("react"));
-const react_dom_1 = __importDefault(require("react-dom"));
-const findKey_1 = __importDefault(require("lodash/findKey"));
-const os_1 = __importDefault(require("os"));
-const path_1 = __importDefault(require("path"));
-const config_1 = __importDefault(require("./config"));
-const store_1 = __importDefault(require("./store"));
-exports.INSPECTOR_URI = "atom://hydrogen/inspector";
-exports.WATCHES_URI = "atom://hydrogen/watch-sidebar";
-exports.OUTPUT_AREA_URI = "atom://hydrogen/output-area";
-exports.KERNEL_MONITOR_URI = "atom://hydrogen/kernel-monitor";
-exports.NO_EXECTIME_STRING = "Not available";
+const {
+  TextEditor,
+  CompositeDisposable,
+  Disposable,
+  Point,
+  Grammar,
+  Dock
+} = require("atom");
+const React = require("react");
+const ReactDOM = require("react-dom");
+const findKey = require("lodash/findKey");
+const os = require("os");
+const path = require("path");
+const Config = require("./config.js");
+const store = require("./store");
+
+const INSPECTOR_URI = "atom://hydrogen/inspector";
+const WATCHES_URI = "atom://hydrogen/watch-sidebar";
+const OUTPUT_AREA_URI = "atom://hydrogen/output-area";
+const KERNEL_MONITOR_URI = "atom://hydrogen/kernel-monitor";
+const NO_EXECTIME_STRING = "Not available";
+
 function reactFactory(
   reactElement,
   domElement,
   additionalTeardown,
-  disposer = store_1.default.subscriptions
+  disposer = store.subscriptions
 ) {
-  react_dom_1.default.render(reactElement, domElement);
-  const disposable = new atom_1.Disposable(() => {
-    react_dom_1.default.unmountComponentAtNode(domElement);
+  ReactDOM.render(reactElement, domElement);
+  const disposable = new Disposable(() => {
+    ReactDOM.unmountComponentAtNode(domElement);
     if (typeof additionalTeardown === "function") {
       additionalTeardown();
     }
   });
   disposer.add(disposable);
 }
-exports.reactFactory = reactFactory;
+
+
 function focus(item) {
   if (item && typeof item === "object") {
     const editorPane = atom.workspace.paneForItem(item);
@@ -66,7 +45,7 @@ function focus(item) {
     }
   }
 }
-exports.focus = focus;
+
 async function openOrShowDock(URI) {
   // atom.workspace.open(URI) will activate/focus the dock by default
   // dock.toggle() or dock.show() will leave focus wherever it was
@@ -88,20 +67,20 @@ async function openOrShowDock(URI) {
   dock = atom.workspace.paneContainerForURI(URI);
   return dock && typeof dock.show === "function" ? dock.show() : null;
 }
-exports.openOrShowDock = openOrShowDock;
+
 function grammarToLanguage(grammar) {
   if (!grammar) {
     return null;
   }
   const grammarLanguage = grammar.name.toLowerCase();
-  const mappings = config_1.default.getJson("languageMappings");
-  const kernelLanguage = (0, findKey_1.default)(
+  const mappings = Config.getJson("languageMappings");
+  const kernelLanguage = (0, findKey)(
     mappings,
     (l) => l.toLowerCase() === grammarLanguage
   );
   return kernelLanguage ? kernelLanguage.toLowerCase() : grammarLanguage;
 }
-exports.grammarToLanguage = grammarToLanguage;
+
 /**
  * Copied from
  * https://github.com/nteract/nteract/blob/master/src/notebook/epics/execute.js#L37
@@ -116,7 +95,7 @@ function msgSpecToNotebookFormat(message) {
     output_type: message.header.msg_type,
   });
 }
-exports.msgSpecToNotebookFormat = msgSpecToNotebookFormat;
+
 /** A very basic converter for supporting jupyter messaging protocol v4 replies */
 function msgSpecV4toV5(message) {
   switch (message.header.msg_type) {
@@ -137,7 +116,7 @@ function msgSpecV4toV5(message) {
   }
   return message;
 }
-exports.msgSpecV4toV5 = msgSpecV4toV5;
+
 const markupGrammars = new Set([
   "source.gfm",
   "source.asciidoc",
@@ -158,11 +137,11 @@ const markupGrammars = new Set([
 function isMultilanguageGrammar(grammar) {
   return markupGrammars.has(grammar.scopeName);
 }
-exports.isMultilanguageGrammar = isMultilanguageGrammar;
+
 const isUnsavedFilePath = (filePath) => {
   return filePath.match(/Unsaved\sEditor\s\d+/) ? true : false;
 };
-exports.isUnsavedFilePath = isUnsavedFilePath;
+
 function kernelSpecProvidesGrammar(kernelSpec, grammar) {
   if (!grammar || !grammar.name || !kernelSpec || !kernelSpec.language) {
     return false;
@@ -173,46 +152,46 @@ function kernelSpecProvidesGrammar(kernelSpec, grammar) {
     return true;
   }
   const mappedLanguage =
-    config_1.default.getJson("languageMappings")[kernelLanguage];
+    Config.getJson("languageMappings")[kernelLanguage];
   if (!mappedLanguage) {
     return false;
   }
   return mappedLanguage.toLowerCase() === grammarLanguage;
 }
-exports.kernelSpecProvidesGrammar = kernelSpecProvidesGrammar;
+
 function getEmbeddedScope(editor, position) {
   const scopes = editor
     .scopeDescriptorForBufferPosition(position)
     .getScopesArray();
   return scopes.find((s) => s.indexOf("source.embedded.") === 0);
 }
-exports.getEmbeddedScope = getEmbeddedScope;
+
 function getEditorDirectory(editor) {
   if (!editor) {
-    return os_1.default.homedir();
+    return os.homedir();
   }
   const editorPath = editor.getPath();
   return editorPath
-    ? path_1.default.dirname(editorPath)
-    : os_1.default.homedir();
+    ? path.dirname(editorPath)
+    : os.homedir();
 }
-exports.getEditorDirectory = getEditorDirectory;
+
 function log(...message) {
   if (atom.config.get("Hydrogen.debug")) {
     console.log("Hydrogen:", ...message);
   }
 }
-exports.log = log;
+
 function hotReloadPackage() {
   const packName = "Hydrogen";
   const packPath = atom.packages.resolvePackagePath(packName);
   if (!packPath) {
     return;
   }
-  const packPathPrefix = packPath + path_1.default.sep;
+  const packPathPrefix = packPath + path.sep;
   const zeromqPathPrefix =
-    path_1.default.join(packPath, "node_modules", "zeromq") +
-    path_1.default.sep;
+    path.join(packPath, "node_modules", "zeromq") +
+    path.sep;
   log(`deactivating ${packName}`);
   atom.packages.deactivatePackage(packName);
   atom.packages.unloadPackage(packName);
@@ -228,23 +207,22 @@ function hotReloadPackage() {
   atom.packages.activatePackage(packName);
   log(`activated ${packName}`);
 }
-exports.hotReloadPackage = hotReloadPackage;
+
 function rowRangeForCodeFoldAtBufferRow(editor, row) {
   const range = editor.tokenizedBuffer.getFoldableRangeContainingPoint(
-    new atom_1.Point(row, Infinity),
+    new Point(row, Infinity),
     editor.getTabLength()
   );
   return range ? [range.start.row, range.end.row] : null;
 }
-exports.rowRangeForCodeFoldAtBufferRow = rowRangeForCodeFoldAtBufferRow;
+
 const EmptyMessage = () => {
-  return react_1.default.createElement(
+  return React.createElement(
     "ul",
     { className: "background-message centered" },
-    react_1.default.createElement("li", null, "No output to display")
+    React.createElement("li", null, "No output to display")
   );
 };
-exports.EmptyMessage = EmptyMessage;
 // TODO: use npm package -- maybe it offers more robust implementation
 
 /**
@@ -275,7 +253,7 @@ function executionTime(message) {
   min %= 60;
   return `${hour} h ${min} m ${sec} s`;
 }
-exports.executionTime = executionTime;
+
 function js_idx_to_char_idx(js_idx, text) {
   if (text === null) {
     return -1;
@@ -291,7 +269,7 @@ function js_idx_to_char_idx(js_idx, text) {
   }
   return char_idx;
 }
-exports.js_idx_to_char_idx = js_idx_to_char_idx;
+
 function char_idx_to_js_idx(char_idx, text) {
   if (text === null) {
     return -1;
@@ -306,7 +284,6 @@ function char_idx_to_js_idx(char_idx, text) {
   }
   return js_idx;
 }
-exports.char_idx_to_js_idx = char_idx_to_js_idx;
 
 /**
  * Sets the `previouslyFocusedElement` property of the given object to
@@ -318,4 +295,31 @@ function setPreviouslyFocusedElement(obj) {
     obj.previouslyFocusedElement = activeElement;
   }
 }
-exports.setPreviouslyFocusedElement = setPreviouslyFocusedElement;
+
+
+module.exports = {
+  INSPECTOR_URI,
+  WATCHES_URI,
+  OUTPUT_AREA_URI,
+  KERNEL_MONITOR_URI,
+  NO_EXECTIME_STRING,
+  reactFactory,
+  focus,
+  openOrShowDock,
+  grammarToLanguage,
+  msgSpecToNotebookFormat,
+  msgSpecV4toV5,
+  isMultilanguageGrammar,
+  isUnsavedFilePath,
+  kernelSpecProvidesGrammar,
+  getEmbeddedScope,
+  getEditorDirectory,
+  log,
+  hotReloadPackage,
+  rowRangeForCodeFoldAtBufferRow,
+  EmptyMessage,
+  executionTime,
+  js_idx_to_char_idx,
+  char_idx_to_js_idx,
+  setPreviouslyFocusedElement,
+};

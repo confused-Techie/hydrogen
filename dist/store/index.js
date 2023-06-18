@@ -1,89 +1,14 @@
-var __createBinding =
-  (this && this.__createBinding) ||
-  (Object.create
-    ? function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (
-          !desc ||
-          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
-        ) {
-          desc = {
-            enumerable: true,
-            get: function () {
-              return m[k];
-            },
-          };
-        }
-        Object.defineProperty(o, k2, desc);
-      }
-    : function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-      });
-var __setModuleDefault =
-  (this && this.__setModuleDefault) ||
-  (Object.create
-    ? function (o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }
-    : function (o, v) {
-        o["default"] = v;
-      });
-var __decorate =
-  (this && this.__decorate) ||
-  function (decorators, target, key, desc) {
-    var c = arguments.length,
-      r =
-        c < 3
-          ? target
-          : desc === null
-          ? (desc = Object.getOwnPropertyDescriptor(target, key))
-          : desc,
-      d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
-      r = Reflect.decorate(decorators, target, key, desc);
-    else
-      for (var i = decorators.length - 1; i >= 0; i--)
-        if ((d = decorators[i]))
-          r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-  };
-var __importStar =
-  (this && this.__importStar) ||
-  function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null)
-      for (var k in mod)
-        if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
-          __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-  };
-var __metadata =
-  (this && this.__metadata) ||
-  function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
-      return Reflect.metadata(k, v);
-  };
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Store = void 0;
-const atom_1 = require("atom");
-const mobx_1 = require("mobx");
-const utils_1 = require("../utils");
-const codeManager = __importStar(require("../code-manager"));
-const markers_1 = __importDefault(require("./markers"));
-const kernel_1 = __importDefault(require("../kernel"));
-const commutable = __importStar(require("@nteract/commutable"));
+const { TextEditor, CompositeDisposable, File, Grammar } = require("atom");
+const { observable, computed, action, keys } = require("mobx");
+const { isMultilanguageGrammar, getEmbeddedScope, isUnsavedFilePath } = require("../utils");
+const codeManager = require("../code-manager");
+const MarkerStore = require("./markers");
+const Kernel = require("../kernel");
+const commutable = require("@nteract/commutable");
+
 class Store {
   constructor() {
-    this.subscriptions = new atom_1.CompositeDisposable();
+    this.subscriptions = new CompositeDisposable();
     this.markersMapping = new Map();
     this.runningKernels = [];
     this.kernelMapping = new Map();
@@ -110,7 +35,7 @@ class Store {
     if (!kernelOrMap) {
       return null;
     }
-    if (kernelOrMap instanceof kernel_1.default) {
+    if (kernelOrMap instanceof Kernel) {
       return kernelOrMap;
     }
     return this.grammar && this.grammar.name
@@ -127,7 +52,7 @@ class Store {
   }
   // TODO fix the types using mobx types
   get filePaths() {
-    return (0, mobx_1.keys)(this.kernelMapping);
+    return keys(this.kernelMapping);
   }
   get notebook() {
     const editor = this.editor;
@@ -173,7 +98,7 @@ class Store {
     return markerStore ? markerStore : this.newMarkerStore(editor.id);
   }
   newMarkerStore(editorId) {
-    const markerStore = new markers_1.default();
+    const markerStore = new MarkerStore();
     this.markersMapping.set(editorId, markerStore);
     return markerStore;
   }
@@ -181,8 +106,8 @@ class Store {
     this.startingKernels.set(kernelDisplayName, true);
   }
   addFileDisposer(editor, filePath) {
-    const fileDisposer = new atom_1.CompositeDisposable();
-    if ((0, utils_1.isUnsavedFilePath)(filePath)) {
+    const fileDisposer = new CompositeDisposable();
+    if (isUnsavedFilePath(filePath)) {
       fileDisposer.add(
         editor.onDidSave((event) => {
           fileDisposer.dispose();
@@ -196,7 +121,7 @@ class Store {
         })
       );
     } else {
-      const file = new atom_1.File(filePath);
+      const file = new File(filePath);
       fileDisposer.add(
         file.onDidDelete(() => {
           this.kernelMapping.delete(filePath);
@@ -207,7 +132,7 @@ class Store {
     this.subscriptions.add(fileDisposer);
   }
   newKernel(kernel, filePath, editor, grammar) {
-    if ((0, utils_1.isMultilanguageGrammar)(editor.getGrammar())) {
+    if (isMultilanguageGrammar(editor.getGrammar())) {
       if (!this.kernelMapping.has(filePath)) {
         this.kernelMapping.set(filePath, new Map());
       }
@@ -235,7 +160,7 @@ class Store {
       if (!kernelOrMap) {
         return;
       }
-      if (kernelOrMap instanceof kernel_1.default) {
+      if (kernelOrMap instanceof Kernel) {
         this.kernelMapping.delete(file);
       } else {
         kernelOrMap.delete(grammar);
@@ -250,7 +175,7 @@ class Store {
       if (!kernelOrMap) {
         return false;
       }
-      return kernelOrMap instanceof kernel_1.default
+      return kernelOrMap instanceof Kernel
         ? kernelOrMap === kernel
         : kernelOrMap.get(grammar) === kernel;
     });
@@ -277,10 +202,10 @@ class Store {
   // Returns the embedded grammar for multilanguage, normal grammar otherwise
   getEmbeddedGrammar(editor) {
     const grammar = editor.getGrammar();
-    if (!(0, utils_1.isMultilanguageGrammar)(grammar)) {
+    if (!isMultilanguageGrammar(grammar)) {
       return grammar;
     }
-    const embeddedScope = (0, utils_1.getEmbeddedScope)(
+    const embeddedScope = getEmbeddedScope(
       editor,
       editor.getCursorBufferPosition()
     );
@@ -325,192 +250,11 @@ class Store {
     this.kernelMapping.delete(oldKey);
   }
 }
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Map)],
-  Store.prototype,
-  "markersMapping",
-  void 0
-);
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Array)],
-  Store.prototype,
-  "runningKernels",
-  void 0
-);
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Object)],
-  Store.prototype,
-  "kernelMapping",
-  void 0
-);
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Map)],
-  Store.prototype,
-  "startingKernels",
-  void 0
-);
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Object)],
-  Store.prototype,
-  "editor",
-  void 0
-);
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Object)],
-  Store.prototype,
-  "grammar",
-  void 0
-);
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Map)],
-  Store.prototype,
-  "configMapping",
-  void 0
-);
-__decorate(
-  [
-    mobx_1.computed,
-    __metadata("design:type", kernel_1.default),
-    __metadata("design:paramtypes", []),
-  ],
-  Store.prototype,
-  "kernel",
-  null
-);
-__decorate(
-  [
-    mobx_1.computed,
-    __metadata("design:type", String),
-    __metadata("design:paramtypes", []),
-  ],
-  Store.prototype,
-  "filePath",
-  null
-);
-__decorate(
-  [
-    mobx_1.computed,
-    __metadata("design:type", Array),
-    __metadata("design:paramtypes", []),
-  ],
-  Store.prototype,
-  "filePaths",
-  null
-);
-__decorate(
-  [
-    mobx_1.computed,
-    __metadata("design:type", Object),
-    __metadata("design:paramtypes", []),
-  ],
-  Store.prototype,
-  "notebook",
-  null
-);
-__decorate(
-  [
-    mobx_1.computed,
-    __metadata("design:type", markers_1.default),
-    __metadata("design:paramtypes", []),
-  ],
-  Store.prototype,
-  "markers",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "newMarkerStore",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "startKernel",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [
-      kernel_1.default,
-      String,
-      atom_1.TextEditor,
-      Object,
-    ]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "newKernel",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [kernel_1.default]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "deleteKernel",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "dispose",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [atom_1.TextEditor]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "updateEditor",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [atom_1.TextEditor]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "setGrammar",
-  null
-);
-__decorate(
-  [
-    mobx_1.action,
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
-    __metadata("design:returntype", void 0),
-  ],
-  Store.prototype,
-  "setConfigValue",
-  null
-);
-exports.Store = Store; // For debugging
+
 const store = new Store();
-exports.default = store;
+
 window.hydrogen_store = store;
+module.exports = {
+  Store, // For debugging
+  default: store
+};

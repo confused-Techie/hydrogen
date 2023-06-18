@@ -1,16 +1,13 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const atom_select_list_1 = __importDefault(require("atom-select-list"));
-const utils_1 = require("./utils");
+const { Panel } = require("atom");
+const SelectListView = require("atom-select-list");
+const { SelectListProperties } = require("atom-select-list");
+const { log, setPreviouslyFocusedElement } = require("./utils");
+
 class KernelPicker {
   constructor(kernelSpecs) {
     this.kernelSpecs = kernelSpecs;
     this.onConfirmed = null;
-    this.selectListView = new atom_select_list_1.default({
+    this.selectListView = new SelectListView({
       itemsClassList: ["mark-active"],
       items: [],
       filterKeyForItem: (item) => item.display_name,
@@ -20,7 +17,7 @@ class KernelPicker {
         return element;
       },
       didConfirmSelection: (item) => {
-        (0, utils_1.log)("Selected kernel:", item);
+        log("Selected kernel:", item);
         if (this.onConfirmed) {
           this.onConfirmed(item);
         }
@@ -45,7 +42,7 @@ class KernelPicker {
     }
   }
   attach() {
-    (0, utils_1.setPreviouslyFocusedElement)(this);
+    setPreviouslyFocusedElement(this);
     if (this.panel == null) {
       this.panel = atom.workspace.addModalPanel({
         item: this.selectListView,
@@ -65,4 +62,5 @@ class KernelPicker {
     }
   }
 }
-exports.default = KernelPicker;
+
+module.exports = KernelPicker;

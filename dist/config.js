@@ -1,4 +1,4 @@
-Object.defineProperty(exports, "__esModule", { value: true });
+
 const Config = {
   getJson(key, _default = {}) {
     const value = atom.config.get(`Hydrogen.${key}`);
@@ -201,4 +201,5 @@ const Config = {
     },
   },
 };
-exports.default = Config;
+
+module.exports = Config;

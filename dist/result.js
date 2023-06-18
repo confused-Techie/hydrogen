@@ -1,19 +1,8 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertMarkdownToOutput =
-  exports.clearResults =
-  exports.clearResult =
-  exports.importResult =
-  exports.createResult =
-    void 0;
-const result_view_1 = __importDefault(require("./components/result-view"));
-const output_area_1 = __importDefault(require("./panes/output-area"));
-const watches_1 = __importDefault(require("./panes/watches"));
-const utils_1 = require("./utils");
+const { TextEditor } = require("atom");
+const ResultView = require("./components/result-view");
+const OutputPane = require("./panes/output-area");
+const WatchesPane = require("./panes/watches");
+const { OUTPUT_AREA_URI, openOrShowDock } = require("./utils");
 
 /**
  * Creates and renders a ResultView.
@@ -31,7 +20,7 @@ function createResult({ editor, kernel, markers }, { code, row, cellType }) {
   if (!editor || !kernel || !markers) {
     return;
   }
-  if (atom.workspace.getActivePaneItem() instanceof watches_1.default) {
+  if (atom.workspace.getActivePaneItem() instanceof WatchesPane) {
     kernel.watchesStore.run();
     return;
   }
@@ -39,13 +28,13 @@ function createResult({ editor, kernel, markers }, { code, row, cellType }) {
     atom.config.get("Hydrogen.outputAreaDefault") ||
     atom.workspace
       .getPaneItems()
-      .find((item) => item instanceof output_area_1.default)
+      .find((item) => item instanceof OutputPane)
       ? kernel.outputStore
       : null;
   if (globalOutputStore) {
-    (0, utils_1.openOrShowDock)(utils_1.OUTPUT_AREA_URI);
+    openOrShowDock(OUTPUT_AREA_URI);
   }
-  const { outputStore } = new result_view_1.default(
+  const { outputStore } = new ResultView(
     markers,
     kernel,
     editor,
@@ -81,7 +70,6 @@ function createResult({ editor, kernel, markers }, { code, row, cellType }) {
     });
   }
 }
-exports.createResult = createResult;
 
 /**
  * Creates inline results from Kernel Responses without a tie to a kernel.
@@ -97,7 +85,7 @@ function importResult({ editor, markers }, { outputs, row }) {
   if (!editor || !markers) {
     return;
   }
-  const { outputStore } = new result_view_1.default(
+  const { outputStore } = new ResultView(
     markers,
     null,
     editor,
@@ -108,7 +96,6 @@ function importResult({ editor, markers }, { outputs, row }) {
     outputStore.appendOutput(output);
   }
 }
-exports.importResult = importResult;
 
 /**
  * Clears a ResultView or selection of ResultViews. To select a result to clear,
@@ -131,7 +118,6 @@ function clearResult({ editor, markers }) {
     markers.clearOnRow(row);
   }
 }
-exports.clearResult = clearResult;
 
 /**
  * Clears all ResultViews of a MarkerStore. It also clears the currect kernel results.
@@ -149,7 +135,6 @@ function clearResults({ kernel, markers }) {
   }
   kernel.outputStore.clear();
 }
-exports.clearResults = clearResults;
 
 /**
  * Converts a string of raw markdown to a display_data Kernel Response. This
@@ -168,4 +153,11 @@ function convertMarkdownToOutput(markdownString) {
     metadata: {},
   };
 }
-exports.convertMarkdownToOutput = convertMarkdownToOutput;
+
+module.exports = {
+  createResult,
+  importResult,
+  clearResult,
+  clearResults,
+  convertMarkdownToOutput,
+};

@@ -1,20 +1,16 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.KernelManager = void 0;
-const map_1 = __importDefault(require("lodash/map"));
-const mapKeys_1 = __importDefault(require("lodash/mapKeys"));
-const sortBy_1 = __importDefault(require("lodash/sortBy"));
-const kernelspecs_1 = require("kernelspecs");
-const electron_1 = require("electron");
-const zmq_kernel_1 = __importDefault(require("./zmq-kernel"));
-const kernel_1 = __importDefault(require("./kernel"));
-const kernel_picker_1 = __importDefault(require("./kernel-picker"));
-const store_1 = __importDefault(require("./store"));
-const utils_1 = require("./utils");
+const { TextEditor, Grammar } = require("atom");
+const map = require("lodash/map");
+const mapKeys = require("lodash/mapKeys");
+const sortBy = require("lodash/sortBy");
+const { findAll } = require("kernelspecs");
+const kernelSpecsFindAll = findAll;
+const { shell } = require("electron");
+const ZMQKernel = require("./zmq-kernel");
+const Kernel = require("./kernel");
+const KernelPicker = require("./kernel-picker");
+const store = require("./store");
+const { getEditorDirectory, kernelSpecProvidesGrammar, log } = require("./utils");
+
 class KernelManager {
   constructor() {
     this.kernelSpecs = null;
@@ -40,13 +36,13 @@ class KernelManager {
   startKernel(kernelSpec, grammar, editor, filePath, onStarted) {
     // if kernel startup already in progress don't start additional kernel
     const displayName = kernelSpec.display_name;
-    if (store_1.default.startingKernels.get(displayName)) {
+    if (store.startingKernels.get(displayName)) {
       return;
     }
-    store_1.default.startKernel(displayName);
-    const currentPath = (0, utils_1.getEditorDirectory)(editor);
+    store.startKernel(displayName);
+    const currentPath = getEditorDirectory(editor);
     let projectPath;
-    (0, utils_1.log)("KernelManager: startKernel:", displayName);
+    log("KernelManager: startKernel:", displayName);
     switch (atom.config.get("Hydrogen.startDir")) {
       case "firstProjectDir":
         projectPath = atom.project.getPaths()[0];
@@ -60,13 +56,13 @@ class KernelManager {
       cwd: kernelStartDir,
       stdio: ["ignore", "pipe", "pipe"],
     };
-    const transport = new zmq_kernel_1.default(
+    const transport = new ZMQKernel(
       kernelSpec,
       grammar,
       options,
       () => {
-        const kernel = new kernel_1.default(transport);
-        store_1.default.newKernel(kernel, filePath, editor, grammar);
+        const kernel = new Kernel(transport);
+        store.newKernel(kernel, filePath, editor, grammar);
         if (onStarted) {
           onStarted(kernel);
         }
@@ -74,15 +70,15 @@ class KernelManager {
     );
   }
   async update() {
-    const kernelSpecs = await (0, kernelspecs_1.findAll)();
-    const kernelResourcesDict = (0, mapKeys_1.default)(
+    const kernelSpecs = await findAll();
+    const kernelResourcesDict = mapKeys(
       kernelSpecs,
       function (value, key) {
         return (value.spec.name = key);
       }
     );
-    this.kernelSpecs = (0, sortBy_1.default)(
-      (0, map_1.default)(kernelResourcesDict, "spec"),
+    this.kernelSpecs = sortBy(
+      map(kernelResourcesDict, "spec"),
       (spec) => spec.display_name
     );
     return this.kernelSpecs;
@@ -99,7 +95,7 @@ class KernelManager {
     }
     const kernelSpecs = await this.getAllKernelSpecs(grammar);
     return kernelSpecs.filter((spec) =>
-      (0, utils_1.kernelSpecProvidesGrammar)(spec, grammar)
+      kernelSpecProvidesGrammar(spec, grammar)
     );
   }
   async getKernelSpecForGrammar(grammar) {
@@ -110,7 +106,7 @@ class KernelManager {
     if (this.kernelPicker) {
       this.kernelPicker.kernelSpecs = kernelSpecs;
     } else {
-      this.kernelPicker = new kernel_picker_1.default(kernelSpecs);
+      this.kernelPicker = new KernelPicker(kernelSpecs);
     }
     return new Promise((resolve) => {
       if (!this.kernelPicker) {
@@ -132,19 +128,19 @@ class KernelManager {
           {
             text: "Install Instructions",
             onDidClick: () =>
-              electron_1.shell.openExternal(
+              shell.openExternal(
                 "https://nteract.gitbooks.io/hydrogen/docs/Installation.html"
               ),
           },
           {
             text: "Popular Kernels",
             onDidClick: () =>
-              electron_1.shell.openExternal("https://nteract.io/kernels"),
+              shell.openExternal("https://nteract.io/kernels"),
           },
           {
             text: "All Kernels",
             onDidClick: () =>
-              electron_1.shell.openExternal(
+              shell.openExternal(
                 "https://github.com/jupyter/jupyter/wiki/Jupyter-kernels"
               ),
           },
@@ -153,7 +149,7 @@ class KernelManager {
       atom.notifications.addError(message, options);
     } else {
       const message = "Hydrogen Kernels updated:";
-      const displayNames = (0, map_1.default)(kernelSpecs, "display_name"); // kernelSpecs.map((kernelSpec) => kernelSpec.display_name)
+      const displayNames = map(kernelSpecs, "display_name"); // kernelSpecs.map((kernelSpec) => kernelSpec.display_name)
       const options = {
         detail: displayNames.join("\n"),
       };
@@ -162,8 +158,16 @@ class KernelManager {
     return kernelSpecs;
   }
 }
-exports.KernelManager = KernelManager;
-// used in the tests
+
+
 if (atom.inSpecMode()) {
-  exports.ks = require("kernelspecs");
+  // used in the tests
+  module.exports = {
+    KernelManager,
+    ks: require("kernelspecs")
+  };
+} else {
+  module.exports = {
+    KernelManager,
+  };
 }

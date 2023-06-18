@@ -1,16 +1,11 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const atom_1 = require("atom");
-const react_1 = __importDefault(require("react"));
-const mathjax_1 = require("@nteract/mathjax");
-const mathjax_electron_1 = require("mathjax-electron");
-const utils_1 = require("../../utils");
-const output_1 = __importDefault(require("../../store/output"));
-const result_view_1 = __importDefault(require("./result-view"));
+const { CompositeDisposable, TextEditor, DisplayMarker } = require("atom");
+const React = require("react");
+const { Provider } = require("@nteract/mathjax");
+const { mathJaxPath } = require("mathjax-electron");
+const { reactFactory } = require("../../utils");
+const OutputStore = require("../../store/output");
+const ResultViewComponent = require("./result-view");
+
 class ResultView {
   constructor(markerStore, kernel, editor, row, showResult = true) {
     this.destroy = () => {
@@ -23,12 +18,12 @@ class ResultView {
     };
     const element = document.createElement("div");
     element.classList.add("hydrogen", "marker");
-    this.disposer = new atom_1.CompositeDisposable();
+    this.disposer = new CompositeDisposable();
     markerStore.clearOnRow(row);
     this.marker = editor.markBufferPosition([row, Infinity], {
       invalidate: "touch",
     });
-    this.outputStore = new output_1.default();
+    this.outputStore = new OutputStore();
     this.outputStore.updatePosition({
       lineLength: editor.element.pixelPositionForBufferPosition([row, Infinity])
         .left,
@@ -56,11 +51,11 @@ class ResultView {
       }
     });
     markerStore.new(this);
-    (0, utils_1.reactFactory)(
-      react_1.default.createElement(
-        mathjax_1.Provider,
-        { src: mathjax_electron_1.mathJaxPath },
-        react_1.default.createElement(result_view_1.default, {
+    reactFactory(
+      React.createElement(
+        Provider,
+        { src: mathJaxPath },
+        React.createElement(ResultViewComponent, {
           store: this.outputStore,
           kernel: kernel,
           destroy: this.destroy,
@@ -73,4 +68,5 @@ class ResultView {
     );
   }
 }
-exports.default = ResultView;
+
+module.exports = ResultView;

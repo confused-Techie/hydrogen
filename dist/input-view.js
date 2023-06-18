@@ -1,6 +1,6 @@
-Object.defineProperty(exports, "__esModule", { value: true });
-const atom_1 = require("atom");
-const utils_1 = require("./utils");
+const { TextEditor, Panel } = require("atom");
+const { setPreviouslyFocusedElement } = require("./utils");
+
 class InputView {
   constructor({ prompt, defaultText, allowCancel, password }, onConfirmed) {
     this.onConfirmed = onConfirmed;
@@ -12,7 +12,7 @@ class InputView {
     const label = document.createElement("div");
     label.classList.add("label", "icon", "icon-arrow-right");
     label.textContent = prompt || "Kernel requires input";
-    this.miniEditor = new atom_1.TextEditor({
+    this.miniEditor = new TextEditor({
       mini: true,
     });
     if (defaultText) {
@@ -54,7 +54,7 @@ class InputView {
     }
   }
   attach() {
-    (0, utils_1.setPreviouslyFocusedElement)(this);
+    setPreviouslyFocusedElement(this);
     this.panel = atom.workspace.addModalPanel({
       item: this.element,
     });
@@ -62,4 +62,5 @@ class InputView {
     this.miniEditor.scrollToCursorPosition();
   }
 }
-exports.default = InputView;
+
+module.exports = InputView;

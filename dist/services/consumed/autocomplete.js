@@ -1,13 +1,11 @@
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.AutocompleteWatchEditor = void 0;
-const atom_1 = require("atom");
+const { TextEditor, CompositeDisposable, Disposable } = require("atom");
 
 /** This acts as a global storage for the consumed service. */
 class AutocompleteWatchEditor {
   constructor() {
     /** The `consumed autocompleteWatchEditor` */
     this.addAutocompleteToEditor = (editor, labels) => {
-      return new atom_1.Disposable(); // dummy disposable // TODO find a better way
+      return new Disposable(); // dummy disposable // TODO find a better way
     };
     this.isEnabeled = false;
   }
@@ -23,11 +21,11 @@ class AutocompleteWatchEditor {
    *   hydrogen deactivate.
    */
   consume(store, watchEditor) {
-    this.disposables = new atom_1.CompositeDisposable();
+    this.disposables = new CompositeDisposable();
     this.addAutocompleteToEditor = watchEditor;
     // Add autocomplete capabilities to already existing watches
     for (const kernel of store.runningKernels) {
-      const watchesStoreDisposable = new atom_1.CompositeDisposable();
+      const watchesStoreDisposable = new CompositeDisposable();
       kernel.watchesStore.autocompleteDisposables = watchesStoreDisposable;
       this.disposables.add(watchesStoreDisposable);
       for (const watch of kernel.watchesStore.watches) {
@@ -35,7 +33,7 @@ class AutocompleteWatchEditor {
       }
     }
     this.isEnabeled = true;
-    const disposable = new atom_1.Disposable(() => this.disable(store));
+    const disposable = new Disposable(() => this.disable(store));
     store.subscriptions.add(disposable);
     return disposable;
   }
@@ -49,7 +47,7 @@ class AutocompleteWatchEditor {
   disable(store) {
     // Removes the consumed function `watchEditor`
     this.addAutocompleteToEditor = (editor, labels) => {
-      return new atom_1.Disposable(); // dummy disposable
+      return new Disposable(); // dummy disposable
     };
 
     /*
@@ -127,6 +125,8 @@ class AutocompleteWatchEditor {
     this.disposables.add(disposable);
   }
 }
-exports.AutocompleteWatchEditor = AutocompleteWatchEditor;
-const autocompleteConsumer = new AutocompleteWatchEditor();
-exports.default = autocompleteConsumer;
+
+module.exports = {
+  AutocompleteWatchEditor,
+  autocompleteConsumer: new AutocompleteWatchEditor()
+};
