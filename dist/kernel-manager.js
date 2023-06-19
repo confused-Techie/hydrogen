@@ -5,11 +5,11 @@ const sortBy = require("lodash/sortBy");
 const { findAll } = require("kernelspecs");
 const kernelSpecsFindAll = findAll;
 const { shell } = require("electron");
-const ZMQKernel = require("./zmq-kernel");
-const Kernel = require("./kernel");
-const KernelPicker = require("./kernel-picker");
-const store = require("./store");
-const { getEditorDirectory, kernelSpecProvidesGrammar, log } = require("./utils");
+const ZMQKernel = require("./zmq-kernel.js");
+const Kernel = require("./kernel.js");
+const KernelPicker = require("./kernel-picker.js");
+const { instance: store } = require("./store/index.js");
+const { getEditorDirectory, kernelSpecProvidesGrammar, log } = require("./utils.js");
 
 class KernelManager {
   constructor() {

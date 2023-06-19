@@ -1,11 +1,18 @@
 "use babel";
 
-import { Store } from "../dist/store";
-import { toggleInspector, toggleOutputMode } from "../dist/commands";
-import KernelTransport from "../dist/kernel-transport";
-import Kernel from "../dist/kernel";
-import { OUTPUT_AREA_URI } from "../dist/utils";
-import OutputPane from "../dist/panes/output-area";
+const { class: Store } = require("../dist/store/index.js");
+const { toggleInspector, toggleOutputMode } = require("../dist/commands.js");
+const KernelTransport = require("../dist/kernel-transport.js");
+const Kernel = require("../dist/kernel.js");
+const { OUTPUT_AREA_URI } = require("../dist/utils.js");
+const OutputPane = require("../dist/panes/output-area.js");
+
+// import { class: Store } from "../dist/store";
+// import { toggleInspector, toggleOutputMode } from "../dist/commands";
+// import KernelTransport from "../dist/kernel-transport";
+// import Kernel from "../dist/kernel";
+// import { OUTPUT_AREA_URI } from "../dist/utils";
+// import OutputPane from "../dist/panes/output-area";
 
 describe("commands", () => {
   let storeMock;

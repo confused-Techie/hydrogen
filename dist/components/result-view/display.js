@@ -10,7 +10,7 @@ const {
   Media,
   RichMedia
 } = require("@nteract/outputs");
-const Plotly = require("./plotly");
+const Plotly = require("./plotly.js");
 const {
   VegaLite1,
   VegaLite2,
@@ -21,7 +21,7 @@ const {
   Vega4,
   Vega5
 } = require("@nteract/transform-vega");
-const Markdown = require("./markdown");
+const Markdown = require("./markdown.js");
 
 // All supported media types for output go here
 let supportedMediaTypes = React.createElement(

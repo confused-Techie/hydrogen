@@ -1,6 +1,6 @@
-const StatusBar = require("./status-bar-component");
-const SignalListView = require("./signal-list-view");
-const Status = require("./status-bar");
+const StatusBar = require("./status-bar-component.js");
+const SignalListView = require("./signal-list-view.js");
+const Status = require("./status-bar.js");
 
 module.exports = {
   StatusBar,

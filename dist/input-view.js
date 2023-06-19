@@ -1,5 +1,5 @@
 const { TextEditor, Panel } = require("atom");
-const { setPreviouslyFocusedElement } = require("./utils");
+const { setPreviouslyFocusedElement } = require("./utils.js");
 
 class InputView {
   constructor({ prompt, defaultText, allowCancel, password }, onConfirmed) {

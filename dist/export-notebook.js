@@ -4,7 +4,7 @@ const { writeFile } = promises;
 const { remote } = require("electron");
 const { dialog } = remote;
 const { stringifyNotebook } = require("@nteract/commutable");
-const store = require("./store");
+const { instance: store } = require("./store/index.js");
 
 async function exportNotebook() {
   const editor = atom.workspace.getActiveTextEditor();

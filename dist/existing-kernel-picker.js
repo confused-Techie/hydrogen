@@ -1,9 +1,9 @@
 const { Panel } = require("atom");
 const SelectListView = require("atom-select-list");
 const { SelectListProperties } = require("atom-select-list");
-const store = require("./store");
+const { instance: store } = require("./store/index.js");
 const tildify = require("tildify");
-const { kernelSpecProvidesGrammar, setPreviouslyFocusedElement } = require("./utils");
+const { kernelSpecProvidesGrammar, setPreviouslyFocusedElement } = require("./utils.js");
 
 function getName(kernel) {
   const prefix = kernel.transport.gatewayName

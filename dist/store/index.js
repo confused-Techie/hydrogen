@@ -1,9 +1,9 @@
 const { TextEditor, CompositeDisposable, File, Grammar } = require("atom");
 const { observable, computed, action, keys } = require("mobx");
 const { isMultilanguageGrammar, getEmbeddedScope, isUnsavedFilePath } = require("../utils.js");
-const codeManager = require("../code-manager");
-const MarkerStore = require("./markers");
-const Kernel = require("../kernel");
+const codeManager = require("../code-manager.js");
+const MarkerStore = require("./markers.js");
+const Kernel = require("../kernel.js");
 const commutable = require("@nteract/commutable");
 
 class Store {
@@ -52,7 +52,9 @@ class Store {
   }
   // TODO fix the types using mobx types
   get filePaths() {
-    return keys(this.kernelMapping);
+    return Array.from(this.kernelMapping.keys());
+    //return keys(this.kernelMapping);
+    // What if we just create our own array
   }
   get notebook() {
     const editor = this.editor;
@@ -254,7 +256,10 @@ class Store {
 const store = new Store();
 
 window.hydrogen_store = store;
+
+// The way the module is exported has changed, now that we no longer mess around
+// With defaults and such
 module.exports = {
-  Store, // For debugging
-  default: store
+  class: Store,// For debugging
+  instance: store
 };

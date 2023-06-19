@@ -1,8 +1,8 @@
 const React = require("react");
 const { observer } = require("mobx-react");
 const { RichMedia, Media } = require("@nteract/outputs");
-const { INSPECTOR_URI } = require("../utils");
-const Markdown = require("./result-view/markdown");
+const { INSPECTOR_URI } = require("../utils.js");
+const Markdown = require("./result-view/markdown.js");
 
 function hide() {
   atom.workspace.hide(INSPECTOR_URI);

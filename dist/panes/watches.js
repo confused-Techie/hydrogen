@@ -1,7 +1,7 @@
 const { CompositeDisposable } = require("atom");
 const React = require("react");
-const { reactFactory, WATCHES_URI } = require("../utils");
-const Watches = require("../components/watch-sidebar");
+const { reactFactory, WATCHES_URI } = require("../utils.js");
+const Watches = require("../components/watch-sidebar/index.js");
 
 class WatchesPane {
     constructor(store) {

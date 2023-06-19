@@ -1,13 +1,22 @@
 "use babel";
 
-import { CompositeDisposable } from "atom";
-import { isObservableMap, isObservableProp, isComputedProp } from "mobx";
-import globalStore, { Store } from "../../dist/store";
-import KernelTransport from "../../dist/kernel-transport";
-import Kernel from "../../dist/kernel";
-import MarkerStore from "../../dist/store/markers";
-import * as commutable from "@nteract/commutable";
-import { waitAsync } from "../helpers/test-utils";
+const { CompositeDisposable } = require("atom");
+const { isObservableMap, isObservableProp, isComputedProp } = require("mobx");
+const { instance: globalStore, class: Store } = require("../../dist/store/index.js");
+const KernelTransport = require("../../dist/kernel-transport.js");
+const Kernel = require("../../dist/kernel.js");
+const MarkerStore = require("../../dist/store/markers.js");
+const commutable = require("@nteract/commutable");
+const { waitAsync } = require("../helpers/test-utils");
+
+//import { CompositeDisposable } from "atom";
+//import { isObservableMap, isObservableProp, isComputedProp } from "mobx";
+//import globalStore, { Store } from "../../dist/store";
+//import KernelTransport from "../../dist/kernel-transport";
+//import Kernel from "../../dist/kernel";
+//import MarkerStore from "../../dist/store/markers";
+//import * as commutable from "@nteract/commutable";
+//import { waitAsync } from "../helpers/test-utils";
 
 describe("Store initialize", () => {
   it("should correctly initialize store", () => {

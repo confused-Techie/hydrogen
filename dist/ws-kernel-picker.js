@@ -1,29 +1,26 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const atom_select_list_1 = __importDefault(require("atom-select-list"));
-const filter_1 = __importDefault(require("lodash/filter"));
-const isEmpty_1 = __importDefault(require("lodash/isEmpty"));
-const tildify_1 = __importDefault(require("tildify"));
-const uuid_1 = require("uuid");
-const ws_1 = __importDefault(require("ws"));
-const xmlhttprequest_1 = require("xmlhttprequest"); // TODO use @aminya/xmlhttprequest
-const url_1 = require("url");
-const services_1 = require("@jupyterlab/services");
-const config_1 = __importDefault(require("./config"));
-const ws_kernel_1 = __importDefault(require("./ws-kernel"));
-const input_view_1 = __importDefault(require("./input-view"));
-const store_1 = __importDefault(require("./store"));
-const utils_1 = require("./utils");
+const { Panel } = require("atom");
+const SelectListView = require("atom-select-list");
+const { SelectListProperties } = require("atom-select-list");
+const filter = require("lodash/filter");
+const isEmpty = require("lodash/isEmtpy");
+const tildify = require("tildify");
+const { v4 } = require("uuid");
+const ws = require("ws");
+const { XMLHttpRequest: NodeXMLHttpRequest } = require("xmlhttprequest"); // TODO use @aminya/xmlhttprequest
+const { URL } = require("url");
+const { Kernel, Session, ServerConnection } = require("@jupyterlab/services");
+const Config = require("./config.js");
+const WSKernel = require("./ws-kernel.js");
+const InputView = require("./input-view.js");
+const { instance: store } = require("./store/index.js");
+const { setPreviouslyFocusedElement, DeepWriteable } = require("./utils.js");
+
 class CustomListView {
   constructor() {
     this.onConfirmed = null;
     this.onCancelled = null;
-    (0, utils_1.setPreviouslyFocusedElement)(this);
-    this.selectListView = new atom_select_list_1.default({
+    setPreviouslyFocusedElement(this);
+    this.selectListView = new SelectListView({
       itemsClassList: ["mark-active"],
       items: [],
       filterKeyForItem: (item) => item.name,
@@ -75,17 +72,17 @@ class WSKernelPicker {
     this.listView = new CustomListView();
   }
   async toggle(_kernelSpecFilter) {
-    (0, utils_1.setPreviouslyFocusedElement)(this.listView);
+    setPreviouslyFocusedElement(this.listView);
     this._kernelSpecFilter = _kernelSpecFilter;
-    const gateways = config_1.default.getJson("gateways") || [];
-    if ((0, isEmpty_1.default)(gateways)) {
+    const gateways = Config.getJson("gateways") || [];
+    if (isEmpty(gateways)) {
       atom.notifications.addError("No remote kernel gateways available", {
         description:
           "Use the Hydrogen package settings to specify the list of remote servers. Hydrogen can use remote kernels on either a Jupyter Kernel Gateway or Jupyter notebook server.",
       });
       return;
     }
-    this._path = `${store_1.default.filePath || "unsaved"}-${(0, uuid_1.v4)()}`;
+    this._path = `${store.filePath || "unsaved"}-${v4()}`;
     this.listView.onConfirmed = this.onGateway.bind(this);
     await this.listView.selectListView.update({
       items: gateways,
@@ -99,7 +96,7 @@ class WSKernelPicker {
     const previouslyFocusedElement = this.listView.previouslyFocusedElement;
     this.listView.cancel();
     const inputPromise = new Promise((resolve, reject) => {
-      const inputView = new input_view_1.default(
+      const inputView = new InputView(
         {
           prompt,
         },
@@ -139,14 +136,14 @@ class WSKernelPicker {
     }
     options.requestHeaders.Cookie = cookie;
     options.xhrFactory = () => {
-      const request = new xmlhttprequest_1.XMLHttpRequest();
+      const request = new NodeXMLHttpRequest();
       // Disable protections against setting the Cookie header
       request.setDisableHeaderCheck(true);
       return request; // TODO fix the types
     };
     options.wsFactory = (url, protocol) => {
       // Authentication requires requests to appear to be same-origin
-      const parsedUrl = new url_1.URL(url);
+      const parsedUrl = new URL(url);
       if (parsedUrl.protocol === "wss:") {
         parsedUrl.protocol = "https:";
       } else {
@@ -157,7 +154,7 @@ class WSKernelPicker {
       };
       const origin = parsedUrl.origin;
       const host = parsedUrl.host;
-      return new ws_1.default(url, protocol, {
+      return new ws(url, protocol, {
         headers,
         origin,
         host,
@@ -220,14 +217,14 @@ class WSKernelPicker {
     });
     const gatewayOptions = {
       xhrFactory: () => new XMLHttpRequest(),
-      wsFactory: (url, protocol) => new ws_1.default(url, protocol),
+      wsFactory: (url, protocol) => new ws(url, protocol),
       ...gatewayInfo.options,
     };
     let serverSettings =
-      services_1.ServerConnection.makeSettings(gatewayOptions);
+      ServerConnection.makeSettings(gatewayOptions);
     let specModels;
     try {
-      specModels = await services_1.Kernel.getSpecs(serverSettings);
+      specModels = await Kernel.getSpecs(serverSettings);
     } catch (error) {
       // The error types you get back at this stage are fairly opaque. In
       // particular, having invalid credentials typically triggers ECONNREFUSED
@@ -245,7 +242,7 @@ class WSKernelPicker {
           return;
         }
         serverSettings =
-          services_1.ServerConnection.makeSettings(gatewayOptions);
+          ServerConnection.makeSettings(gatewayOptions);
         await this.listView.selectListView.update({
           items: [],
           infoMessage: undefined,
@@ -256,9 +253,9 @@ class WSKernelPicker {
     }
     try {
       if (!specModels) {
-        specModels = await services_1.Kernel.getSpecs(serverSettings);
+        specModels = await Kernel.getSpecs(serverSettings);
       }
-      const kernelSpecs = (0, filter_1.default)(
+      const kernelSpecs = filter(
         specModels.kernelspecs,
         (spec) => this._kernelSpecFilter(spec)
       );
@@ -272,7 +269,7 @@ class WSKernelPicker {
       }
       const kernelNames = kernelSpecs.map((specModel) => specModel.name);
       try {
-        let sessionModels = await services_1.Session.listRunning(
+        let sessionModels = await Session.listRunning(
           serverSettings
         );
         // if no seession propmt for the crendials
@@ -280,8 +277,8 @@ class WSKernelPicker {
         if (sessionModels.length === 0) {
           await this.promptForCredentials(gatewayOptions);
           serverSettings =
-            services_1.ServerConnection.makeSettings(gatewayOptions);
-          sessionModels = await services_1.Session.listRunning(serverSettings);
+            ServerConnection.makeSettings(gatewayOptions);
+          sessionModels = await Session.listRunning(serverSettings);
         }
         sessionModels = sessionModels.filter((model) => {
           const name = model.kernel ? model.kernel.name : null;
@@ -290,9 +287,9 @@ class WSKernelPicker {
         const items = sessionModels.map((model) => {
           let name;
           if (model.path) {
-            name = (0, tildify_1.default)(model.path);
+            name = tildify(model.path);
           } else if (model.notebook.path) {
-            name = (0, tildify_1.default)(model.notebook.path);
+            name = tildify(model.notebook.path);
           } else {
             name = `Session ${model.id}`;
           }
@@ -345,7 +342,7 @@ class WSKernelPicker {
   async onSessionWithModel(gatewayName, sessionInfo) {
     this.onSessionChosen(
       gatewayName,
-      await services_1.Session.connectTo(
+      await Session.connectTo(
         sessionInfo.model.id,
         sessionInfo.options
       )
@@ -380,23 +377,24 @@ class WSKernelPicker {
     });
   }
   startSession(gatewayName, sessionInfo) {
-    services_1.Session.startNew(sessionInfo.options).then(
+    Session.startNew(sessionInfo.options).then(
       this.onSessionChosen.bind(this, gatewayName)
     );
   }
   async onSessionChosen(gatewayName, session) {
     this.listView.cancel();
     const kernelSpec = await session.kernel.getSpec();
-    if (!store_1.default.grammar) {
+    if (!store.grammar) {
       return;
     }
-    const kernel = new ws_kernel_1.default(
+    const kernel = new WSKernel(
       gatewayName,
       kernelSpec,
-      store_1.default.grammar,
+      store.grammar,
       session
     );
     this._onChosen(kernel);
   }
 }
-exports.default = WSKernelPicker;
+
+module.exports = WSKernelPicker;

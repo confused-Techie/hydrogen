@@ -2,7 +2,7 @@ const { CompositeDisposable } = require("atom");
 const React = require("react");
 const { useEffect, useRef } = require("react");
 const { observer } = require("mobx-react");
-const Display = require("./display.js");
+const { Display } = require("./display.js");
 
 function RangeSlider({ outputStore }) {
   const {

@@ -1,7 +1,7 @@
 const { Panel } = require("atom");
 const SelectListView = require("atom-select-list");
 const { SelectListProperties } = require("atom-select-list");
-const { log, setPreviouslyFocusedElement } = require("./utils");
+const { log, setPreviouslyFocusedElement } = require("./utils.js");
 
 class KernelPicker {
   constructor(kernelSpecs) {

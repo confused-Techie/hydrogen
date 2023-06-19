@@ -1,100 +1,59 @@
-var __createBinding =
-  (this && this.__createBinding) ||
-  (Object.create
-    ? function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (
-          !desc ||
-          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
-        ) {
-          desc = {
-            enumerable: true,
-            get: function () {
-              return m[k];
-            },
-          };
-        }
-        Object.defineProperty(o, k2, desc);
-      }
-    : function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-      });
-var __setModuleDefault =
-  (this && this.__setModuleDefault) ||
-  (Object.create
-    ? function (o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }
-    : function (o, v) {
-        o["default"] = v;
-      });
-var __importStar =
-  (this && this.__importStar) ||
-  function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null)
-      for (var k in mod)
-        if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
-          __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-  };
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.consumeStatusBar =
-  exports.consumeAutocompleteWatchEditor =
-  exports.provideAutocompleteResults =
-  exports.provideHydrogen =
-  exports.deactivate =
-  exports.activate =
-  exports.config =
-    void 0;
-const atom_1 = require("atom");
-const debounce_1 = __importDefault(require("lodash/debounce"));
-const mobx_1 = require("mobx");
-const inspector_1 = __importDefault(require("./panes/inspector"));
-const watches_1 = __importDefault(require("./panes/watches"));
-const output_area_1 = __importDefault(require("./panes/output-area"));
-const kernel_monitor_1 = __importDefault(require("./panes/kernel-monitor"));
-const config_1 = __importDefault(require("./config"));
-const zmq_kernel_1 = __importDefault(require("./zmq-kernel"));
-const ws_kernel_1 = __importDefault(require("./ws-kernel"));
-const kernel_1 = __importDefault(require("./kernel"));
-const kernel_picker_1 = __importDefault(require("./kernel-picker"));
-const ws_kernel_picker_1 = __importDefault(require("./ws-kernel-picker"));
-const existing_kernel_picker_1 = __importDefault(
-  require("./existing-kernel-picker")
-);
-const hydrogen_provider_1 = __importDefault(
-  require("./plugin-api/hydrogen-provider")
-);
-const store_1 = __importDefault(require("./store"));
-const kernel_manager_1 = require("./kernel-manager");
-const services_1 = __importDefault(require("./services"));
-const commands = __importStar(require("./commands"));
-const codeManager = __importStar(require("./code-manager"));
-const result = __importStar(require("./result"));
-const utils_1 = require("./utils");
-const export_notebook_1 = require("./export-notebook");
-const import_notebook_1 = require("./import-notebook");
-exports.config = config_1.default.schema;
+const {
+  Emitter,
+  CompositeDisposable,
+  Disposable,
+  Point,
+  TextEditor,
+  Grammar
+} = require("atom");
+const { StatusBar } = require("atom/status-bar");
+const debounce = require("lodash/debounce");
+const { autorun } = require("mobx");
+const React = require("react");
+const InspectorPane = require("./panes/inspector.js");
+const WatchesPane = require("./panes/watches.js");
+const OutputPane = require("./panes/output-area.js");
+const KernelMonitorPane = require("./panes/kernel-monitor.js");
+const Config = require("./config.js");
+const ZMQKernel = require("./zmq-kernel.js");
+const WSKernel = require("./ws-kernel.js");
+const Kernel = require("./kernel.js");
+const KernelPicker = require("./kernel-picker.js");
+const WSKernelPicker = require("./ws-kernel-picker.js");
+const ExistingKernelPicker = require("./existing-kernel-picker.js");
+const HydrogenProvider = require("./plugin-api/hydrogen-provider.js");
+const { instance: store } = require("./store/index.js");
+const { KernelManager } = require("./kernel-manager.js");
+const services = require("./services/index.js");
+const commands = require("./commands.js");
+const codeManager = require("./code-manager.js");
+const result = require("./result.js");
+const {
+  log,
+  isMultilanguageGrammar,
+  INSPECTOR_URI,
+  WATCHES_URI,
+  OUTPUT_AREA_URI,
+  KERNEL_MONITOR_URI,
+  hotReloadPackage,
+  openOrShowDock,
+  kernelSpecProvidesGrammar
+} = require("./utils.js");
+const { exportNotebook } = require("./export-notebook.js");
+const { importNotebook, ipynbOpener } = require("./import-notebook.js");
+
 let emitter;
 let kernelPicker;
 let existingKernelPicker;
 let wsKernelPicker;
 let hydrogenProvider;
-const kernelManager = new kernel_manager_1.KernelManager();
+
+const kernelManager = new KernelManager();
+
 function activate() {
-  emitter = new atom_1.Emitter();
+  emitter = new Emitter();
   let skipLanguageMappingsChange = false;
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.config.onDidChange(
       "Hydrogen.languageMappings",
       ({ newValue, oldValue }) => {
@@ -102,7 +61,7 @@ function activate() {
           skipLanguageMappingsChange = false;
           return;
         }
-        if (store_1.default.runningKernels.length != 0) {
+        if (store.runningKernels.length != 0) {
           skipLanguageMappingsChange = true;
           atom.config.set("Hydrogen.languageMappings", oldValue);
           atom.notifications.addError("Hydrogen", {
@@ -114,21 +73,21 @@ function activate() {
       }
     )
   );
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.config.observe("Hydrogen.statusBarDisable", (newValue) => {
-      store_1.default.setConfigValue(
+      store.setConfigValue(
         "Hydrogen.statusBarDisable",
         Boolean(newValue)
       );
     }),
     atom.config.observe("Hydrogen.statusBarKernelInfo", (newValue) => {
-      store_1.default.setConfigValue(
+      store.setConfigValue(
         "Hydrogen.statusBarKernelInfo",
         Boolean(newValue)
       );
     })
   );
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.commands.add("atom-text-editor:not([mini])", {
       "hydrogen:run": () => run(),
       "hydrogen:run-all": () => runAll(),
@@ -137,12 +96,12 @@ function activate() {
       "hydrogen:run-cell": () => runCell(),
       "hydrogen:run-cell-and-move-down": () => runCell(true),
       "hydrogen:toggle-watches": () =>
-        atom.workspace.toggle(utils_1.WATCHES_URI),
+        atom.workspace.toggle(WATCHES_URI),
       "hydrogen:toggle-output-area": () => commands.toggleOutputMode(),
       "hydrogen:toggle-kernel-monitor": async () => {
         const lastItem = atom.workspace.getActivePaneItem();
         const lastPane = atom.workspace.paneForItem(lastItem);
-        await atom.workspace.toggle(utils_1.KERNEL_MONITOR_URI);
+        await atom.workspace.toggle(KERNEL_MONITOR_URI);
         if (lastPane) {
           lastPane.activate();
         }
@@ -151,82 +110,82 @@ function activate() {
       "hydrogen:connect-to-remote-kernel": () => connectToWSKernel(),
       "hydrogen:connect-to-existing-kernel": () => connectToExistingKernel(),
       "hydrogen:add-watch": () => {
-        if (store_1.default.kernel) {
-          store_1.default.kernel.watchesStore.addWatchFromEditor(
-            store_1.default.editor
+        if (store.kernel) {
+          store.kernel.watchesStore.addWatchFromEditor(
+            store.editor
           );
-          (0, utils_1.openOrShowDock)(utils_1.WATCHES_URI);
+          openOrShowDock(WATCHES_URI);
         }
       },
       "hydrogen:remove-watch": () => {
-        if (store_1.default.kernel) {
-          store_1.default.kernel.watchesStore.removeWatch();
-          (0, utils_1.openOrShowDock)(utils_1.WATCHES_URI);
+        if (store.kernel) {
+          store.kernel.watchesStore.removeWatch();
+          openOrShowDock(WATCHES_URI);
         }
       },
       "hydrogen:update-kernels": async () => {
         await kernelManager.updateKernelSpecs();
       },
       "hydrogen:toggle-inspector": () =>
-        commands.toggleInspector(store_1.default),
+        commands.toggleInspector(store),
       "hydrogen:interrupt-kernel": () =>
         handleKernelCommand(
           {
             command: "interrupt-kernel",
           },
-          store_1.default
+          store
         ),
       "hydrogen:restart-kernel": () =>
         handleKernelCommand(
           {
             command: "restart-kernel",
           },
-          store_1.default
+          store
         ),
       "hydrogen:shutdown-kernel": () =>
         handleKernelCommand(
           {
             command: "shutdown-kernel",
           },
-          store_1.default
+          store
         ),
-      "hydrogen:clear-result": () => result.clearResult(store_1.default),
-      "hydrogen:export-notebook": () => (0, export_notebook_1.exportNotebook)(),
+      "hydrogen:clear-result": () => result.clearResult(store),
+      "hydrogen:export-notebook": () => (0, exportNotebook)(),
       "hydrogen:fold-current-cell": () => foldCurrentCell(),
       "hydrogen:fold-all-but-current-cell": () => foldAllButCurrentCell(),
-      "hydrogen:clear-results": () => result.clearResults(store_1.default),
+      "hydrogen:clear-results": () => result.clearResults(store),
     })
   );
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.commands.add("atom-workspace", {
-      "hydrogen:import-notebook": import_notebook_1.importNotebook,
+      "hydrogen:import-notebook": importNotebook,
     })
   );
   if (atom.inDevMode()) {
-    store_1.default.subscriptions.add(
+    store.subscriptions.add(
       atom.commands.add("atom-workspace", {
-        "hydrogen:hot-reload-package": () => (0, utils_1.hotReloadPackage)(),
+        "hydrogen:hot-reload-package": () => hotReloadPackage(),
       })
     );
   }
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.workspace.observeActiveTextEditor((editor) => {
-      store_1.default.updateEditor(editor);
+      store.updateEditor(editor);
     })
   );
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.workspace.observeTextEditors((editor) => {
-      const editorSubscriptions = new atom_1.CompositeDisposable();
+      const editorSubscriptions = new CompositeDisposable();
       editorSubscriptions.add(
         editor.onDidChangeGrammar(() => {
-          store_1.default.setGrammar(editor);
+          store.setGrammar(editor);
         })
       );
-      if ((0, utils_1.isMultilanguageGrammar)(editor.getGrammar())) {
+      if (isMultilanguageGrammar(editor.getGrammar())) {
         editorSubscriptions.add(
           editor.onDidChangeCursorPosition(
-            (0, debounce_1.default)(() => {
-              store_1.default.setGrammar(editor);
+            debounce(() => {
+              store.setGrammar(editor);
             }, 75)
           )
         );
@@ -238,100 +197,98 @@ function activate() {
       );
       editorSubscriptions.add(
         editor.onDidChangeTitle((newTitle) =>
-          store_1.default.forceEditorUpdate()
+          store.forceEditorUpdate()
         )
       );
-      store_1.default.subscriptions.add(editorSubscriptions);
+      store.subscriptions.add(editorSubscriptions);
     })
   );
   hydrogenProvider = null;
-  store_1.default.subscriptions.add(
+  store.subscriptions.add(
     atom.workspace.addOpener((uri) => {
       switch (uri) {
-        case utils_1.INSPECTOR_URI:
-          return new inspector_1.default(store_1.default);
-        case utils_1.WATCHES_URI:
-          return new watches_1.default(store_1.default);
-        case utils_1.OUTPUT_AREA_URI:
-          return new output_area_1.default(store_1.default);
-        case utils_1.KERNEL_MONITOR_URI:
-          return new kernel_monitor_1.default(store_1.default);
+        case INSPECTOR_URI:
+          return new InspectorPane(store);
+        case WATCHES_URI:
+          return new WatchesPane(store);
+        case OUTPUT_AREA_URI:
+          return new OutputPane(store);
+        case KERNEL_MONITOR_URI:
+          return new KernelMonitorPane(store);
         default: {
           return;
         }
       }
     })
   );
-  store_1.default.subscriptions.add(
-    atom.workspace.addOpener(import_notebook_1.ipynbOpener)
+  store.subscriptions.add(
+    atom.workspace.addOpener(ipynbOpener)
   );
-  store_1.default.subscriptions.add(
-    new atom_1.Disposable(() => {
+  store.subscriptions.add(
+    new Disposable(() => {
       // Destroy any Panes when the package is deactivated.
       atom.workspace.getPaneItems().forEach((item) => {
         if (
-          item instanceof inspector_1.default ||
-          item instanceof watches_1.default ||
-          item instanceof output_area_1.default ||
-          item instanceof kernel_monitor_1.default
+          item instanceof InspectorPane ||
+          item instanceof WatchesPane ||
+          item instanceof OutputPane ||
+          item instanceof KernelMonitorPane
         ) {
           item.destroy();
         }
       });
     })
   );
-  (0, mobx_1.autorun)(() => {
-    emitter.emit("did-change-kernel", store_1.default.kernel);
+  autorun(() => {
+    emitter.emit("did-change-kernel", store.kernel);
   });
 }
-exports.activate = activate;
+
 function deactivate() {
-  store_1.default.dispose();
+  store.dispose();
 }
-exports.deactivate = deactivate;
+
 function provideHydrogen() {
   if (!hydrogenProvider) {
-    hydrogenProvider = new hydrogen_provider_1.default(emitter);
+    hydrogenProvider = new HydrogenProvider(emitter);
   }
   return hydrogenProvider;
 }
 
 /*-------------- Service Providers --------------*/
-exports.provideHydrogen = provideHydrogen;
 function provideAutocompleteResults() {
-  return services_1.default.provided.autocomplete.provideAutocompleteResults(
-    store_1.default
+  return services.provided.autocomplete.provideAutocompleteResults(
+    store
   );
 }
-exports.provideAutocompleteResults = provideAutocompleteResults;
 
 /*-----------------------------------------------*/
 
 /*-------------- Service Consumers --------------*/
 function consumeAutocompleteWatchEditor(watchEditor) {
-  return services_1.default.consumed.autocomplete.consume(
-    store_1.default,
+  return services.consumed.autocomplete.consume(
+    store,
     watchEditor
   );
 }
-exports.consumeAutocompleteWatchEditor = consumeAutocompleteWatchEditor;
+
 function consumeStatusBar(statusBar) {
-  return services_1.default.consumed.statusBar.addStatusBar(
-    store_1.default,
+  return services.consumed.statusBar.addStatusBar(
+    store,
     statusBar,
     handleKernelCommand
   );
 }
-exports.consumeStatusBar = consumeStatusBar;
+
 function connectToExistingKernel() {
   if (!existingKernelPicker) {
-    existingKernelPicker = new existing_kernel_picker_1.default();
+    existingKernelPicker = new ExistingKernelPicker();
   }
   existingKernelPicker.toggle();
 }
 function handleKernelCommand({ command, payload }, { kernel, markers }) {
   // TODO payload is not used!
-  (0, utils_1.log)("handleKernelCommand:", [
+  log("handleKernelCommand:", [
     { command, payload },
     { kernel, markers },
   ]);
@@ -353,7 +310,7 @@ function handleKernelCommand({ command, payload }, { kernel, markers }) {
     kernel.destroy();
   } else if (
     command === "rename-kernel" &&
-    kernel.transport instanceof ws_kernel_1.default
+    kernel.transport instanceof WSKernel
   ) {
     kernel.transport.promptRename();
   } else if (command === "disconnect-kernel") {
@@ -364,7 +321,7 @@ function handleKernelCommand({ command, payload }, { kernel, markers }) {
   }
 }
 function run(moveDown = false) {
-  const editor = store_1.default.editor;
+  const editor = store.editor;
   if (!editor) {
     return;
   }
@@ -381,7 +338,7 @@ function run(moveDown = false) {
   const { row } = codeBlock;
   const cellType = codeManager.getMetadataForRow(
     editor,
-    new atom_1.Point(row, 0)
+    new Point(row, 0)
   );
   const code =
     cellType === "markdown"
@@ -390,8 +347,8 @@ function run(moveDown = false) {
   if (moveDown) {
     codeManager.moveDown(editor, row);
   }
-  checkForKernel(store_1.default, (kernel) => {
-    result.createResult(store_1.default, {
+  checkForKernel(store, (kernel) => {
+    result.createResult(store, {
       code,
       row,
       cellType,
@@ -399,11 +356,11 @@ function run(moveDown = false) {
   });
 }
 function runAll(breakpoints) {
-  const { editor, kernel, grammar, filePath } = store_1.default;
+  const { editor, kernel, grammar, filePath } = store;
   if (!editor || !grammar || !filePath) {
     return;
   }
-  if ((0, utils_1.isMultilanguageGrammar)(editor.getGrammar())) {
+  if (isMultilanguageGrammar(editor.getGrammar())) {
     atom.notifications.addError(
       '"Run All" is not supported for this file type!'
     );
@@ -435,8 +392,8 @@ function _runAll(editor, kernel, breakpoints) {
       cellType === "markdown"
         ? codeManager.removeCommentsMarkdownCell(editor, codeNullable)
         : codeNullable;
-    checkForKernel(store_1.default, (kernel) => {
-      result.createResult(store_1.default, {
+    checkForKernel(store, (kernel) => {
+      result.createResult(store, {
         code,
         row,
         cellType,
@@ -445,11 +402,11 @@ function _runAll(editor, kernel, breakpoints) {
   }
 }
 function runAllAbove() {
-  const { editor, kernel, grammar, filePath } = store_1.default;
+  const { editor, kernel, grammar, filePath } = store;
   if (!editor || !grammar || !filePath) {
     return;
   }
-  if ((0, utils_1.isMultilanguageGrammar)(editor.getGrammar())) {
+  if (isMultilanguageGrammar(editor.getGrammar())) {
     atom.notifications.addError(
       '"Run All Above" is not supported for this file type!'
     );
@@ -483,8 +440,8 @@ function _runAllAbove(editor, kernel) {
         cellType === "markdown"
           ? codeManager.removeCommentsMarkdownCell(editor, codeNullable)
           : codeNullable;
-      checkForKernel(store_1.default, (kernel) => {
-        result.createResult(store_1.default, {
+      checkForKernel(store, (kernel) => {
+        result.createResult(store, {
           code,
           row,
           cellType,
@@ -497,7 +454,7 @@ function _runAllAbove(editor, kernel) {
   }
 }
 function runCell(moveDown = false) {
-  const editor = store_1.default.editor;
+  const editor = store.editor;
   if (!editor) {
     return;
   }
@@ -521,8 +478,8 @@ function runCell(moveDown = false) {
   if (moveDown) {
     codeManager.moveDown(editor, row);
   }
-  checkForKernel(store_1.default, (kernel) => {
-    result.createResult(store_1.default, {
+  checkForKernel(store, (kernel) => {
+    result.createResult(store, {
       code,
       row,
       cellType,
@@ -530,14 +487,14 @@ function runCell(moveDown = false) {
   });
 }
 function foldCurrentCell() {
-  const editor = store_1.default.editor;
+  const editor = store.editor;
   if (!editor) {
     return;
   }
   codeManager.foldCurrentCell(editor);
 }
 function foldAllButCurrentCell() {
-  const editor = store_1.default.editor;
+  const editor = store.editor;
   if (!editor) {
     return;
   }
@@ -545,14 +502,14 @@ function foldAllButCurrentCell() {
 }
 function startZMQKernel() {
   kernelManager
-    .getAllKernelSpecsForGrammar(store_1.default.grammar)
+    .getAllKernelSpecsForGrammar(store.grammar)
     .then((kernelSpecs) => {
       if (kernelPicker) {
         kernelPicker.kernelSpecs = kernelSpecs;
       } else {
-        kernelPicker = new kernel_picker_1.default(kernelSpecs);
+        kernelPicker = new KernelPicker(kernelSpecs);
         kernelPicker.onConfirmed = (kernelSpec) => {
-          const { editor, grammar, filePath, markers } = store_1.default;
+          const { editor, grammar, filePath, markers } = store;
           if (!editor || !grammar || !filePath || !markers) {
             return;
           }
@@ -565,21 +522,21 @@ function startZMQKernel() {
 }
 function connectToWSKernel() {
   if (!wsKernelPicker) {
-    wsKernelPicker = new ws_kernel_picker_1.default((transport) => {
-      const kernel = new kernel_1.default(transport);
-      const { editor, grammar, filePath, markers } = store_1.default;
+    wsKernelPicker = new WSKernelPicker((transport) => {
+      const kernel = new Kernel(transport);
+      const { editor, grammar, filePath, markers } = store;
       if (!editor || !grammar || !filePath || !markers) {
         return;
       }
       markers.clear();
-      if (kernel.transport instanceof zmq_kernel_1.default) {
+      if (kernel.transport instanceof ZMQKernel) {
         kernel.destroy();
       }
-      store_1.default.newKernel(kernel, filePath, editor, grammar);
+      store.newKernel(kernel, filePath, editor, grammar);
     });
   }
   wsKernelPicker.toggle((kernelSpec) =>
-    (0, utils_1.kernelSpecProvidesGrammar)(kernelSpec, store_1.default.grammar)
+    kernelSpecProvidesGrammar(kernelSpec, store.grammar)
   );
 }
 // Accepts store as an arg
@@ -597,3 +554,13 @@ function checkForKernel({ editor, grammar, filePath, kernel }, callback) {
     callback(newKernel)
   );
 }
+
+module.exports = {
+  config: Config.schema,
+  activate,
+  deactivate,
+  provideHydrogen,
+  provideAutocompleteResults,
+  consumeAutocompleteWatchEditor,
+  consumeStatusBar,
+};

@@ -1,5 +1,5 @@
-const statusBar = require("./status-bar");
-const autocomplete = require("./autocomplete");
+const statusBar = require("./status-bar/index.js");
+const autocomplete = require("./autocomplete.js");
 
 module.exports = {
   statusBar,

@@ -1,7 +1,7 @@
 const { Grammar } = require("atom");
-const KernelTransport = require("./kernel-transport");
-const InputView = require("./input-view");
-const { log, js_idx_to_char_idx } = require("./utils");
+const KernelTransport = require("./kernel-transport.js");
+const InputView = require("./input-view.js");
+const { log, js_idx_to_char_idx } = require("./utils.js");
 
 class WSKernel extends KernelTransport {
   constructor(gatewayName, kernelSpec, grammar, session) {

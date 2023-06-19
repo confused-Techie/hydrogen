@@ -1,6 +1,6 @@
 const { CompositeDisposable, Disposable } = require("atom");
 const React = require("react");
-const { reactFactory, OUTPUT_AREA_URI } = require("../utils");
+const { reactFactory, OUTPUT_AREA_URI } = require("../utils.js");
 const OutputArea = require("../components/output-area.js");
 
 class OutputPane {

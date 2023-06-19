@@ -1,7 +1,7 @@
 const { TextEditor, Disposable } = require("atom");
 const { action } = require("mobx");
-const { OutputStore } = require("./output");
-const { log } = require("../utils");
+const { OutputStore } = require("./output.js");
+const { log } = require("../utils.js");
 
 class WatchStore {
   constructor(kernel) {

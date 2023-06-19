@@ -1,9 +1,9 @@
 const { TextEditor, CompositeDisposable } = require("atom");
 const { action, observable } = require("mobx");
 const SelectListView = require("atom-select-list");
-const WatchStore = require("./watch");
-const AutocompleteConsumer = require("../services/consumed/autocomplete");
-const { setPreviouslyFocusedElement } = require("../utils");
+const WatchStore = require("./watch.js");
+const AutocompleteConsumer = require("../services/consumed/autocomplete.js");
+const { setPreviouslyFocusedElement } = require("../utils.js");
 
 class WatchesStore {
   constructor(kernel) {

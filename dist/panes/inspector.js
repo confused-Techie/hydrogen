@@ -1,6 +1,6 @@
 const { CompositeDisposable } = require("atom");
 const React = require("react");
-const { reactFactory, INSPECTOR_URI } = require("../utils");
+const { reactFactory, INSPECTOR_URI } = require("../utils.js");
 const Inspector = require("../components/inspector.js");
 
 class InspectorPane {

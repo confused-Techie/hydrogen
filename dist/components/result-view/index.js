@@ -2,9 +2,9 @@ const { CompositeDisposable, TextEditor, DisplayMarker } = require("atom");
 const React = require("react");
 const { Provider } = require("@nteract/mathjax");
 const { mathJaxPath } = require("mathjax-electron");
-const { reactFactory } = require("../../utils");
-const OutputStore = require("../../store/output");
-const ResultViewComponent = require("./result-view");
+const { reactFactory } = require("../../utils.js");
+const OutputStore = require("../../store/output.js");
+const ResultViewComponent = require("./result-view.js");
 
 class ResultView {
   constructor(markerStore, kernel, editor, row, showResult = true) {

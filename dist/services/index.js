@@ -1,5 +1,5 @@
-const consumed = require("./consumed");
-const provided = require("./provided");
+const consumed = require("./consumed/index.js");
+const provided = require("./provided/index.js");
 
 module.exports = {
   consumed,

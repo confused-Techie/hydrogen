@@ -1,12 +1,8 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const atom_select_list_1 = __importDefault(require("atom-select-list"));
-const ws_kernel_1 = __importDefault(require("../../../ws-kernel"));
-const utils_1 = require("../../../utils");
+const { Panel } = require("atom");
+const SelectListView = require("atom-select-list");
+const WSKernel = require("../../../ws-kernel.js");
+const { log, setPreviouslyFocusedElement } = require("../../../utils.js");
+
 const basicCommands = [
   {
     name: "Interrupt",
@@ -21,6 +17,7 @@ const basicCommands = [
     value: "shutdown-kernel",
   },
 ];
+
 const wsKernelCommands = [
   {
     name: "Rename session for",
@@ -31,11 +28,12 @@ const wsKernelCommands = [
     value: "disconnect-kernel",
   },
 ];
+
 class SignalListView {
   constructor(store, handleKernelCommand) {
     this.store = store;
     this.handleKernelCommand = handleKernelCommand;
-    this.selectListView = new atom_select_list_1.default({
+    this.selectListView = new SelectListView({
       itemsClassList: ["mark-active"],
       items: [],
       filterKeyForItem: (item) => item.name,
@@ -45,7 +43,7 @@ class SignalListView {
         return element;
       },
       didConfirmSelection: (item) => {
-        (0, utils_1.log)("Selected command:", item);
+        log("Selected command:", item);
         this.onConfirmed(item);
         this.cancel();
       },
@@ -70,7 +68,7 @@ class SignalListView {
       return;
     }
     const commands =
-      kernel.transport instanceof ws_kernel_1.default
+      kernel.transport instanceof WSKernel
         ? [...basicCommands, ...wsKernelCommands]
         : basicCommands;
     const listItems = commands.map((command) => ({
@@ -83,7 +81,7 @@ class SignalListView {
     this.attach();
   }
   attach() {
-    (0, utils_1.setPreviouslyFocusedElement)(this);
+    setPreviouslyFocusedElement(this);
     if (this.panel == null) {
       this.panel = atom.workspace.addModalPanel({
         item: this.selectListView,
@@ -107,4 +105,5 @@ class SignalListView {
     }
   }
 }
-exports.default = SignalListView;
+
+module.exports = SignalListView;

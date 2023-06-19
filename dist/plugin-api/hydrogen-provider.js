@@ -1,6 +1,6 @@
 const { TextEditor, Range, Emitter } = require("atom");
-const store = require("../store");
-const { getCurrentCell } = require("../code-manager");
+const { instance: store } = require("../store/index.js");
+const { getCurrentCell } = require("../code-manager.js");
 
 /**
  * @version 1.0.0 The Plugin API allows you to make Hydrogen awesome. You will

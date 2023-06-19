@@ -6,9 +6,9 @@ const { observer } = require("mobx-react");
 const Anser = require("anser");
 const History = require("./result-view/history.js");
 const ScrollList = require("./result-view/list.js");
-const { OUTPUT_AREA_URI, EmptyMessage } = require("../utils");
+const { OUTPUT_AREA_URI, EmptyMessage } = require("../utils.js");
 
-let OutputArea = class OutputArea extends React.Component {
+class OutputArea extends React.Component {
   constructor() {
     super(...arguments);
     this.showHistory = true;

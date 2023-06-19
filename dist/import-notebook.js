@@ -1,64 +1,22 @@
-var __createBinding =
-  (this && this.__createBinding) ||
-  (Object.create
-    ? function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        var desc = Object.getOwnPropertyDescriptor(m, k);
-        if (
-          !desc ||
-          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
-        ) {
-          desc = {
-            enumerable: true,
-            get: function () {
-              return m[k];
-            },
-          };
-        }
-        Object.defineProperty(o, k2, desc);
-      }
-    : function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-      });
-var __setModuleDefault =
-  (this && this.__setModuleDefault) ||
-  (Object.create
-    ? function (o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }
-    : function (o, v) {
-        o["default"] = v;
-      });
-var __importStar =
-  (this && this.__importStar) ||
-  function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null)
-      for (var k in mod)
-        if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k))
-          __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-  };
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports._loadNotebook = exports.importNotebook = exports.ipynbOpener = void 0;
-const path = __importStar(require("path"));
-const fs_1 = require("fs");
-const { readFile } = fs_1.promises;
-const electron_1 = require("electron");
-const { dialog } = electron_1.remote;
-const commutable_1 = require("@nteract/commutable");
-const store_1 = __importDefault(require("./store"));
-const code_manager_1 = require("./code-manager");
-const result_1 = require("./result");
+const { TextEditor, Grammar } = require("atom");
+const path = require("path");
+const { promises } = require("fs");
+const { readFile } = promises;
+const { remote } = require("electron");
+const { dialog } = remote;
+const { fromJS } = require("@nteract/commutable");
+const { instance: store } = require("./store/index.js");
+const { getCommentStartString } = require("./code-manager.js");
+const { importResult, convertMarkdownToOutput } = require("./result.js");
+
 const linesep = process.platform === "win32" ? "\r\n" : "\n";
+
+/**
+ * Determines if the provided uri is a valid file for Hydrogen to import. Then
+ * it loads the notebook.
+ *
+ * @param {String} uri - Uri of the file to open.
+ */
 function ipynbOpener(uri) {
   if (
     path.extname(uri).toLowerCase() === ".ipynb" &&
@@ -72,17 +30,17 @@ function ipynbOpener(uri) {
 }
 
 /**
- * Determines if the provided uri is a valid file for Hydrogen to import. Then
- * it loads the notebook.
+ * Determines if the provided event is trying to open a valid file for Hydrogen
+ * to import. Otherwise it will ask the user to chose a valid file for Hydrogen
+ * to import. Then it loads the notebook.
  *
- * @param {String} uri - Uri of the file to open.
+ * @param {Event} event - Atom Event from clicking in a treeview.
  */
-exports.ipynbOpener = ipynbOpener;
 function importNotebook(event) {
   // Use selected filepath if called from tree-view context menu
   var _a;
-  const filenameFromTreeView =
-    (_a = event.target.dataset) === null || _a === void 0 ? void 0 : _a.path;
+  const filenameFromTreeView = event.target.dataset?.path;
+
   if (filenameFromTreeView && path.extname(filenameFromTreeView) === ".ipynb") {
     return _loadNotebook(
       filenameFromTreeView,
@@ -116,14 +74,15 @@ function importNotebook(event) {
     }
   );
 }
+
 /**
- * Determines if the provided event is trying to open a valid file for Hydrogen
- * to import. Otherwise it will ask the user to chose a valid file for Hydrogen
- * to import. Then it loads the notebook.
+ * Reads the given notebook file and coverts it to a text editor format with
+ * Hydrogen cell breakpoints. Optionally after opening the notebook, it will
+ * also load the previous results and display them.
  *
- * @param {Event} event - Atom Event from clicking in a treeview.
+ * @param {String} filename - Path of the file.
+ * @param {Boolean} importResults - Decides whether to display previous results
  */
-exports.importNotebook = importNotebook;
 async function _loadNotebook(filename, importResults = false) {
   let data;
   let nb;
@@ -137,7 +96,7 @@ async function _loadNotebook(filename, importResults = false) {
         "Only notebook version 4 is fully supported"
       );
     }
-    nb = (0, commutable_1.fromJS)(data);
+    nb = fromJS(data);
   } catch (err) {
     if (err.name === "SyntaxError") {
       atom.notifications.addError("Error not a valid notebook", {
@@ -156,7 +115,7 @@ async function _loadNotebook(filename, importResults = false) {
     return;
   }
   atom.grammars.assignLanguageMode(editor.getBuffer(), grammar.scopeName);
-  const commentStartString = (0, code_manager_1.getCommentStartString)(editor);
+  const commentStartString = getCommentStartString(editor);
   if (!commentStartString) {
     atom.notifications.addError("No comment symbol defined in root scope");
     return;
@@ -178,15 +137,7 @@ async function _loadNotebook(filename, importResults = false) {
     importNotebookResults(editor, nbCells, resultRows);
   }
 }
-/**
- * Reads the given notebook file and coverts it to a text editor format with
- * Hydrogen cell breakpoints. Optionally after opening the notebook, it will
- * also load the previous results and display them.
- *
- * @param {String} filename - Path of the file.
- * @param {Boolean} importResults - Decides whether to display previous results
- */
-exports._loadNotebook = _loadNotebook;
+
 
 /**
  * Tries to determine the Atom Grammar of a notebook. Default is Python.
@@ -370,15 +321,15 @@ function importNotebookResults(editor, nbCells, resultRows) {
   if (nbCells.length != resultRows.length) {
     return;
   }
-  let markers = store_1.default.markersMapping.get(editor.id);
-  markers = markers ? markers : store_1.default.newMarkerStore(editor.id);
+  let markers = store.markersMapping.get(editor.id);
+  markers = markers ? markers : store.newMarkerStore(editor.id);
   let cellNumber = 0;
   for (const cell of nbCells) {
     const row = resultRows[cellNumber];
     switch (cell.cell_type) {
       case "code":
         if (cell.outputs.length > 0) {
-          (0, result_1.importResult)(
+          importResult(
             {
               editor,
               markers,
@@ -391,13 +342,13 @@ function importNotebookResults(editor, nbCells, resultRows) {
         }
         break;
       case "markdown":
-        (0, result_1.importResult)(
+        importResult(
           {
             editor,
             markers,
           },
           {
-            outputs: [(0, result_1.convertMarkdownToOutput)(cell.source)],
+            outputs: [convertMarkdownToOutput(cell.source)],
             row,
           }
         );
@@ -406,3 +357,9 @@ function importNotebookResults(editor, nbCells, resultRows) {
     cellNumber++;
   }
 }
+
+module.exports = {
+  ipynbOpener,
+  importNotebook,
+  _loadNotebook,
+};

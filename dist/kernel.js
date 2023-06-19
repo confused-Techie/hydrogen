@@ -8,13 +8,13 @@ const {
   msgSpecV4toV5,
   INSPECTOR_URI,
   executionTime
-} = require("./utils");
-const store = require("./store");
-const WatchesStore = require("./store/watches");
-const { OutputStore } = require("./store/output");
-const HydrogenKernel = require("./plugin-api/hydrogen-kernel");
-const InputView = require("./input-view");
-const KernelTransport = require("./kernel-transport");
+} = require("./utils.js");
+const { instance: store } = require("./store/index.js");
+const WatchesStore = require("./store/watches.js");
+const { OutputStore } = require("./store/output.js");
+const HydrogenKernel = require("./plugin-api/hydrogen-kernel.js");
+const InputView = require("./input-view.js");
+const KernelTransport = require("./kernel-transport.js");
 
 function protectFromInvalidMessages(onResults) {
   const wrappedOnResults = (message, channel) => {

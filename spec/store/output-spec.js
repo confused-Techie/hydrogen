@@ -1,9 +1,6 @@
 "use babel";
 
-import OutputStore, {
-  reduceOutputs,
-  isSingleLine,
-} from "../../dist/store/output";
+const { OutputStore, reduceOutputs, isSingleLine } = require("../../dist/store/output.js");
 
 // Adapted from https://github.com/nteract/nteract/blob/master/test/renderer/reducers/document-spec.js#L33
 describe("reduceOutputs", () => {

@@ -3,7 +3,7 @@ const {
   escapeCarriageReturn,
   escapeCarriageReturnSafe
 } = require("escape-carriage");
-const { isTextOutputOnly } = require("../components/result-view/display");
+const { isTextOutputOnly } = require("../components/result-view/display.js");
 
 const outputTypes = ["execute_result", "display_data", "stream", "error"];
 

@@ -4,7 +4,7 @@ const { ReactTableDefaults } = require("react-table");
 const { observer } = require("mobx-react");
 const tildify = require("tildify");
 const Kernel = require("../kernel.js");
-const { isUnsavedFilePath } = require("../utils");
+const { isUnsavedFilePath } = require("../utils.js");
 
 const showKernelSpec = (kernelSpec) => {
   atom.notifications.addInfo("Hydrogen: Kernel Spec", {

@@ -1,13 +1,8 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.provideAutocompleteResults = void 0;
-const head_1 = __importDefault(require("lodash/head"));
-const anser_1 = __importDefault(require("anser"));
-const utils_1 = require("../../utils");
+const { autocompleteProvider } = require("atom/autocomplete-plus");
+const head = require("lodash/head");
+const Anser = require("anser");
+const { log, char_idx_to_js_idx } = require("../../utils.js");
+
 const iconHTML = `<img src='${__dirname}/../../../static/logo.svg' style='width: 100%;'>`;
 const regexes = {
   // pretty dodgy, adapted from http://stackoverflow.com/a/8396658
@@ -17,15 +12,16 @@ const regexes = {
   // adapted from http://php.net/manual/en/language.variables.basics.php
   php: /[$A-Z_a-z\x7f-\xff][\w\x7f-\xff]*$/,
 };
+
 function parseCompletions(results, prefix) {
   const { matches, metadata } = results;
   // @NOTE: This can make invalid `replacedPrefix` and `replacedText` when a line includes unicode characters
   // @TODO (@aviatesk): Use `Regex` to detect them regardless of the `results.cursor_*` feedbacks from kernels
-  const cursor_start = (0, utils_1.char_idx_to_js_idx)(
+  const cursor_start = char_idx_to_js_idx(
     results.cursor_start,
     prefix
   );
-  const cursor_end = (0, utils_1.char_idx_to_js_idx)(
+  const cursor_end = char_idx_to_js_idx(
     results.cursor_end,
     prefix
   );
@@ -61,6 +57,7 @@ function parseCompletions(results, prefix) {
     };
   });
 }
+
 function provideAutocompleteResults(store) {
   const autocompleteProvider = {
     enabled: atom.config.get("Hydrogen.autocomplete"),
@@ -92,7 +89,7 @@ function provideAutocompleteResults(store) {
       ]);
       const regex = regexes[kernel.language];
       if (regex) {
-        prefix = (0, head_1.default)(line.match(regex)) || "";
+        prefix = head(line.match(regex)) || "";
       } else {
         prefix = line;
       }
@@ -109,7 +106,7 @@ function provideAutocompleteResults(store) {
       if (prefix.trim().length < minimumWordLength) {
         return null;
       }
-      (0, utils_1.log)(
+      log(
         "autocompleteProvider: request:",
         line,
         bufferPosition,
@@ -142,7 +139,7 @@ function provideAutocompleteResults(store) {
             resolve(null);
             return;
           }
-          const description = anser_1.default.ansiToText(data["text/plain"]);
+          const description = Anser.ansiToText(data["text/plain"]);
           resolve({
             text,
             replacementPrefix,
@@ -176,4 +173,5 @@ function provideAutocompleteResults(store) {
   );
   return autocompleteProvider;
 }
-exports.provideAutocompleteResults = provideAutocompleteResults;
+
+module.exports = provideAutocompleteResults;

@@ -1,8 +1,8 @@
 const { TextEditor } = require("atom");
-const ResultView = require("./components/result-view");
-const OutputPane = require("./panes/output-area");
-const WatchesPane = require("./panes/watches");
-const { OUTPUT_AREA_URI, openOrShowDock } = require("./utils");
+const ResultView = require("./components/result-view/index.js");
+const OutputPane = require("./panes/output-area.js");
+const WatchesPane = require("./panes/watches.js");
+const { OUTPUT_AREA_URI, openOrShowDock } = require("./utils.js");
 
 /**
  * Creates and renders a ResultView.

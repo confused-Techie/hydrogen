@@ -1,7 +1,7 @@
 const { CompositeDisposable } = require("atom");
 const React = require("react");
 const { reactFactory, KERNEL_MONITOR_URI } = require("../utils");
-const KernelMonitor = require("../components/kernel-monitor");
+const KernelMonitor = require("../components/kernel-monitor.js");
 
 class KernelMonitorPane {
     constructor(store) {

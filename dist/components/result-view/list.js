@@ -1,6 +1,6 @@
 const React = require("react");
 const { observer } = require("mobx-react");
-const Display = require("./display");
+const { Display } = require("./display.js");
 
 class ScrollList extends React.Component {
   scrollToBottom() {

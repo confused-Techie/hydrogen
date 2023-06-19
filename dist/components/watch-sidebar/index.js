@@ -1,9 +1,12 @@
 const React = require("react");
-const mobx_react_1 = require("mobx-react");
+const { observer } = require("mobx-react");
 const Watch = require("./watch.js");
-const { WATCHES_URI, EmptyMessage } = require("../../utils");
+const { WATCHES_URI, EmptyMessage } = require("../../utils.js");
 
-const Watches = (0, mobx_react_1.observer)(({ store: { kernel } }) => {
+//const Watches = observer(({ store: { kernel } }) => {
+const Watches = observer(({ store }) => {
+  let kernel = store.kernel;
+
   if (!kernel) {
     if (atom.config.get("Hydrogen.outputAreaDock")) {
       return React.createElement(EmptyMessage, null);

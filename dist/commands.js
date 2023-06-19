@@ -1,4 +1,4 @@
-const { log, INSPECTOR_URI, OUTPUT_AREA_URI, openOrShowDock } = require("./utils");
+const { log, INSPECTOR_URI, OUTPUT_AREA_URI, openOrShowDock } = require("./utils.js");
 const { getCodeToInspect } = require("./code-manager.js");
 const OutputPane = require("./panes/output-area.js");
 

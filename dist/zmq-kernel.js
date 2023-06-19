@@ -1,24 +1,21 @@
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = __importDefault(require("fs"));
-const jmp_1 = require("jmp");
-const uuid_1 = require("uuid");
-const spawnteract_1 = require("spawnteract");
-const config_1 = __importDefault(require("./config"));
-const kernel_transport_1 = __importDefault(require("./kernel-transport"));
-const utils_1 = require("./utils");
-class ZMQKernel extends kernel_transport_1.default {
+const { Grammar } = require("atom");
+const { ChildProcess } = require("child_process");
+const fs = require("fs");
+const { Message, Socket } = require("jmp");
+const { v4 } = require("uuid");
+const { launchSpec, launchSpecFromConnectionInfo } = require("spawnteract");
+const Config = require("./config.js");
+const KernelTransport = require("./kernel-transport.js");
+const { log, js_idx_to_char_idx } = require("./utils.js");
+
+class ZMQKernel extends KernelTransport {
   constructor(kernelSpec, grammar, options, onStarted) {
     super(kernelSpec, grammar);
     this.executionCallbacks = {};
     this.options = options || {};
     // Otherwise spawnteract deletes the file and hydrogen's restart kernel fails
     options.cleanupConnectionFile = false;
-    (0, spawnteract_1.launchSpec)(kernelSpec, options).then(
+    launchSpec(kernelSpec, options).then(
       ({ config, connectionFile, spawn }) => {
         this.connection = config;
         this.connectionFile = connectionFile;
@@ -36,10 +33,10 @@ class ZMQKernel extends kernel_transport_1.default {
   connect(done) {
     const scheme = this.connection.signature_scheme.slice("hmac-".length);
     const { key } = this.connection;
-    this.shellSocket = new jmp_1.Socket("dealer", scheme, key);
-    this.stdinSocket = new jmp_1.Socket("dealer", scheme, key);
-    this.ioSocket = new jmp_1.Socket("sub", scheme, key);
-    const id = (0, uuid_1.v4)();
+    this.shellSocket = new Socket("dealer", scheme, key);
+    this.stdinSocket = new Socket("dealer", scheme, key);
+    this.ioSocket = new Socket("sub", scheme, key);
+    const id = v4();
     this.shellSocket.identity = `dealer${id}`;
     this.stdinSocket.identity = `dealer${id}`;
     this.ioSocket.identity = `sub${id}`;
@@ -62,7 +59,7 @@ class ZMQKernel extends kernel_transport_1.default {
           dismissable: true,
         });
       } else {
-        (0, utils_1.log)("ZMQKernel: stdout:", data);
+        log("ZMQKernel: stdout:", data);
       }
     });
     childProcess.stderr.on("data", (data) => {
@@ -77,11 +74,11 @@ class ZMQKernel extends kernel_transport_1.default {
       const socketNames = ["shellSocket", "ioSocket"];
       let waitGroup = socketNames.length;
       const onConnect = ({ socketName, socket }) => {
-        (0, utils_1.log)(`ZMQKernel: ${socketName} connected`);
+        log(`ZMQKernel: ${socketName} connected`);
         socket.unmonitor();
         waitGroup--;
         if (waitGroup === 0) {
-          (0, utils_1.log)("ZMQKernel: all main sockets connected");
+          log("ZMQKernel: all main sockets connected");
           this.setExecutionState("idle");
           if (done) {
             done();
@@ -89,7 +86,7 @@ class ZMQKernel extends kernel_transport_1.default {
         }
       };
       const monitor = (socketName, socket) => {
-        (0, utils_1.log)(`ZMQKernel: monitor ${socketName}`);
+        log(`ZMQKernel: monitor ${socketName}`);
         socket.on(
           "connect",
           onConnect.bind(this, {
@@ -102,7 +99,7 @@ class ZMQKernel extends kernel_transport_1.default {
       monitor("shellSocket", this.shellSocket);
       monitor("ioSocket", this.ioSocket);
     } catch (err) {
-      (0, utils_1.log)("ZMQKernel:", err);
+      log("ZMQKernel:", err);
     }
   }
   interrupt() {
@@ -111,19 +108,19 @@ class ZMQKernel extends kernel_transport_1.default {
         detail: "Kernel interruption is currently not supported in Windows.",
       });
     } else {
-      (0, utils_1.log)("ZMQKernel: sending SIGINT");
+      log("ZMQKernel: sending SIGINT");
       this.kernelProcess.kill("SIGINT");
     }
   }
   _kill() {
-    (0, utils_1.log)("ZMQKernel: sending SIGKILL");
+    log("ZMQKernel: sending SIGKILL");
     this.kernelProcess.kill("SIGKILL");
   }
   _executeStartupCode() {
     const displayName = this.kernelSpec.display_name;
-    let startupCode = config_1.default.getJson("startupCode")[displayName];
+    let startupCode = Config.getJson("startupCode")[displayName];
     if (startupCode) {
-      (0, utils_1.log)("KernelManager: Executing startup code:", startupCode);
+      log("KernelManager: Executing startup code:", startupCode);
       startupCode += "\n";
       this.execute(startupCode, (message, channel) => {});
     }
@@ -135,12 +132,12 @@ class ZMQKernel extends kernel_transport_1.default {
     this._socketRestart(onRestarted);
   }
   _socketShutdown(restart = false) {
-    const requestId = `shutdown_${(0, uuid_1.v4)()}`;
+    const requestId = `shutdown_${v4()}`;
     const message = _createMessage("shutdown_request", requestId);
     message.content = {
       restart,
     };
-    this.shellSocket.send(new jmp_1.Message(message));
+    this.shellSocket.send(new Message(message));
   }
   _socketRestart(onRestarted) {
     if (this.executionState === "restarting") {
@@ -149,7 +146,7 @@ class ZMQKernel extends kernel_transport_1.default {
     this.setExecutionState("restarting");
     this._socketShutdown(true);
     this._kill();
-    const { spawn } = (0, spawnteract_1.launchSpecFromConnectionInfo)(
+    const { spawn } = launchSpecFromConnectionInfo(
       this.kernelSpec,
       this.connection,
       this.connectionFile,
@@ -166,8 +163,8 @@ class ZMQKernel extends kernel_transport_1.default {
   // onResults is a callback that may be called multiple times
   // as results come in from the kernel
   execute(code, onResults) {
-    (0, utils_1.log)("ZMQKernel.execute:", code);
-    const requestId = `execute_${(0, uuid_1.v4)()}`;
+    log("ZMQKernel.execute:", code);
+    const requestId = `execute_${v4()}`;
     const message = _createMessage("execute_request", requestId);
     message.content = {
       code,
@@ -177,24 +174,24 @@ class ZMQKernel extends kernel_transport_1.default {
       allow_stdin: true,
     };
     this.executionCallbacks[requestId] = onResults;
-    this.shellSocket.send(new jmp_1.Message(message));
+    this.shellSocket.send(new Message(message));
   }
   complete(code, onResults) {
-    (0, utils_1.log)("ZMQKernel.complete:", code);
-    const requestId = `complete_${(0, uuid_1.v4)()}`;
+    log("ZMQKernel.complete:", code);
+    const requestId = `complete_${v4()}`;
     const message = _createMessage("complete_request", requestId);
     message.content = {
       code,
       text: code,
       line: code,
-      cursor_pos: (0, utils_1.js_idx_to_char_idx)(code.length, code),
+      cursor_pos: js_idx_to_char_idx(code.length, code),
     };
     this.executionCallbacks[requestId] = onResults;
-    this.shellSocket.send(new jmp_1.Message(message));
+    this.shellSocket.send(new Message(message));
   }
   inspect(code, cursorPos, onResults) {
-    (0, utils_1.log)("ZMQKernel.inspect:", code, cursorPos);
-    const requestId = `inspect_${(0, uuid_1.v4)()}`;
+    log("ZMQKernel.inspect:", code, cursorPos);
+    const requestId = `inspect_${v4()}`;
     const message = _createMessage("inspect_request", requestId);
     message.content = {
       code,
@@ -202,18 +199,18 @@ class ZMQKernel extends kernel_transport_1.default {
       detail_level: 0,
     };
     this.executionCallbacks[requestId] = onResults;
-    this.shellSocket.send(new jmp_1.Message(message));
+    this.shellSocket.send(new Message(message));
   }
   inputReply(input) {
-    const requestId = `input_reply_${(0, uuid_1.v4)()}`;
+    const requestId = `input_reply_${v4()}`;
     const message = _createMessage("input_reply", requestId);
     message.content = {
       value: input,
     };
-    this.stdinSocket.send(new jmp_1.Message(message));
+    this.stdinSocket.send(new Message(message));
   }
   onShellMessage(message) {
-    (0, utils_1.log)("shell message:", message);
+    log("shell message:", message);
     if (!_isValidMessage(message)) {
       return;
     }
@@ -227,7 +224,7 @@ class ZMQKernel extends kernel_transport_1.default {
     }
   }
   onStdinMessage(message) {
-    (0, utils_1.log)("stdin message:", message);
+    log("stdin message:", message);
     if (!_isValidMessage(message)) {
       return;
     }
@@ -244,7 +241,7 @@ class ZMQKernel extends kernel_transport_1.default {
     }
   }
   onIOMessage(message) {
-    (0, utils_1.log)("IO message:", message);
+    log("IO message:", message);
     if (!_isValidMessage(message)) {
       return;
     }
@@ -263,57 +260,58 @@ class ZMQKernel extends kernel_transport_1.default {
     }
   }
   destroy() {
-    (0, utils_1.log)("ZMQKernel: destroy:", this);
+    log("ZMQKernel: destroy:", this);
     this.shutdown();
     this._kill();
-    fs_1.default.unlinkSync(this.connectionFile);
+    fs.unlinkSync(this.connectionFile);
     this.shellSocket.close();
     this.ioSocket.close();
     this.stdinSocket.close();
     super.destroy();
   }
 }
-exports.default = ZMQKernel;
+
 function _isValidMessage(message) {
   if (!message) {
-    (0, utils_1.log)("Invalid message: null");
+    log("Invalid message: null");
     return false;
   }
   if (!message.content) {
-    (0, utils_1.log)("Invalid message: Missing content");
+    log("Invalid message: Missing content");
     return false;
   }
   if (message.content.execution_state === "starting") {
     // Kernels send a starting status message with an empty parent_header
-    (0, utils_1.log)("Dropped starting status IO message");
+    log("Dropped starting status IO message");
     return false;
   }
   if (!message.parent_header) {
-    (0, utils_1.log)("Invalid message: Missing parent_header");
+    log("Invalid message: Missing parent_header");
     return false;
   }
   if (!message.parent_header.msg_id) {
-    (0, utils_1.log)("Invalid message: Missing parent_header.msg_id");
+    log("Invalid message: Missing parent_header.msg_id");
     return false;
   }
   if (!message.parent_header.msg_type) {
-    (0, utils_1.log)("Invalid message: Missing parent_header.msg_type");
+    log("Invalid message: Missing parent_header.msg_type");
     return false;
   }
   if (!message.header) {
-    (0, utils_1.log)("Invalid message: Missing header");
+    log("Invalid message: Missing header");
     return false;
   }
   if (!message.header.msg_id) {
-    (0, utils_1.log)("Invalid message: Missing header.msg_id");
+    log("Invalid message: Missing header.msg_id");
     return false;
   }
   if (!message.header.msg_type) {
-    (0, utils_1.log)("Invalid message: Missing header.msg_type");
+    log("Invalid message: Missing header.msg_type");
     return false;
   }
   return true;
 }
+
 function _getUsername() {
   return (
     process.env.LOGNAME ||
@@ -322,7 +320,8 @@ function _getUsername() {
     process.env.USERNAME
   );
 }
-function _createMessage(msgType, msgId = (0, uuid_1.v4)()) {
+
+function _createMessage(msgType, msgId = v4()) {
   const message = {
     header: {
       username: _getUsername(),
@@ -338,3 +337,5 @@ function _createMessage(msgType, msgId = (0, uuid_1.v4)()) {
   };
   return message;
 }
+
+module.exports = ZMQKernel;

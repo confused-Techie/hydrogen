@@ -1,6 +1,6 @@
 const { Grammar } = require("atom");
 const { observable, action } = require("mobx");
-const { log } = require("./utils");
+const { log } = require("./utils.js");
 
 class KernelTransport {
   constructor(kernelSpec, grammar) {

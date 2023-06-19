@@ -12,7 +12,13 @@ const findKey = require("lodash/findKey");
 const os = require("os");
 const path = require("path");
 const Config = require("./config.js");
-const store = require("./store");
+//const store = require("./store/index.js");
+
+/**
+ * Previously we used `store` within reactFactory
+ * But since `store` also uses `utils` it become a circular dependency.
+ * Will test to see if we can set to just CompositeDisposable
+ */
 
 const INSPECTOR_URI = "atom://hydrogen/inspector";
 const WATCHES_URI = "atom://hydrogen/watch-sidebar";
@@ -24,7 +30,8 @@ function reactFactory(
   reactElement,
   domElement,
   additionalTeardown,
-  disposer = store.subscriptions
+  //disposer = store.subscriptions
+  disposer = new CompositeDisposable()
 ) {
   ReactDOM.render(reactElement, domElement);
   const disposable = new Disposable(() => {
@@ -321,5 +328,5 @@ module.exports = {
   executionTime,
   js_idx_to_char_idx,
   char_idx_to_js_idx,
-  setPreviouslyFocusedElement,
+  setPreviouslyFocusedElement
 };

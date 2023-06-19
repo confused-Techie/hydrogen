@@ -1,48 +1,18 @@
-var __decorate =
-  (this && this.__decorate) ||
-  function (decorators, target, key, desc) {
-    var c = arguments.length,
-      r =
-        c < 3
-          ? target
-          : desc === null
-          ? (desc = Object.getOwnPropertyDescriptor(target, key))
-          : desc,
-      d;
-    if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
-      r = Reflect.decorate(decorators, target, key, desc);
-    else
-      for (var i = decorators.length - 1; i >= 0; i--)
-        if ((d = decorators[i]))
-          r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
-    return c > 3 && r && Object.defineProperty(target, key, r), r;
-  };
-var __metadata =
-  (this && this.__metadata) ||
-  function (k, v) {
-    if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
-      return Reflect.metadata(k, v);
-  };
-var __importDefault =
-  (this && this.__importDefault) ||
-  function (mod) {
-    return mod && mod.__esModule ? mod : { default: mod };
-  };
-Object.defineProperty(exports, "__esModule", { value: true });
-const atom_1 = require("atom");
-const react_1 = __importDefault(require("react"));
-const mobx_react_1 = require("mobx-react");
-const mobx_1 = require("mobx");
-const display_1 = __importDefault(require("./display"));
-const status_1 = __importDefault(require("./status"));
+const { CompositeDisposable } = require("atom");
+const React = require("react");
+const { observer } = require("mobx-react");
+const { action, observable } = require("mobx");
+const { Display } = require("./display.js");
+const Status = require("./status.js");
+
 const SCROLL_HEIGHT = 600;
-let ResultViewComponent = class ResultViewComponent extends react_1.default
-  .Component {
+
+class ResultViewComponent extends React.Component {
   constructor() {
     super(...arguments);
-    this.containerTooltip = new atom_1.CompositeDisposable();
-    this.buttonTooltip = new atom_1.CompositeDisposable();
-    this.closeTooltip = new atom_1.CompositeDisposable();
+    this.containerTooltip = new CompositeDisposable();
+    this.buttonTooltip = new CompositeDisposable();
+    this.closeTooltip = new CompositeDisposable();
     this.expanded = false;
     this.getAllText = () => {
       if (!this.el) {
@@ -136,7 +106,7 @@ let ResultViewComponent = class ResultViewComponent extends react_1.default
     };
     if (outputs.length === 0 || !this.props.showResult) {
       const kernel = this.props.kernel;
-      return react_1.default.createElement(status_1.default, {
+      return React.createElement(Status, {
         status:
           kernel && kernel.executionState !== "busy" && status === "running"
             ? "error"
@@ -144,7 +114,7 @@ let ResultViewComponent = class ResultViewComponent extends react_1.default
         style: inlineStyle,
       });
     }
-    return react_1.default.createElement(
+    return React.createElement(
       "div",
       {
         className: `${
@@ -163,7 +133,7 @@ let ResultViewComponent = class ResultViewComponent extends react_1.default
           .get(`Hydrogen.wrapOutput`)
           .toString(),
       },
-      react_1.default.createElement(
+      React.createElement(
         "div",
         {
           className: "hydrogen_cell_display",
@@ -189,7 +159,7 @@ let ResultViewComponent = class ResultViewComponent extends react_1.default
           },
         },
         outputs.map((output, index) =>
-          react_1.default.createElement(display_1.default, {
+          React.createElement(Display, {
             output: output,
             key: index,
           })
@@ -197,29 +167,29 @@ let ResultViewComponent = class ResultViewComponent extends react_1.default
       ),
       isPlain
         ? null
-        : react_1.default.createElement(
+        : React.createElement(
             "div",
             { className: "toolbar" },
-            react_1.default.createElement("div", {
+            React.createElement("div", {
               className: "icon icon-x",
               onClick: this.props.destroy,
               ref: (ref) => this.addCloseButtonTooltip(ref, this.closeTooltip),
             }),
-            react_1.default.createElement("div", {
+            React.createElement("div", {
               style: {
                 flex: 1,
                 minHeight: "0.25em",
               },
             }),
             this.getAllText().length > 0
-              ? react_1.default.createElement("div", {
+              ? React.createElement("div", {
                   className: "icon icon-clippy",
                   onClick: this.handleClick,
                   ref: this.addCopyButtonTooltip,
                 })
               : null,
             this.el && this.el.scrollHeight > SCROLL_HEIGHT
-              ? react_1.default.createElement("div", {
+              ? React.createElement("div", {
                   className: `icon icon-${this.expanded ? "fold" : "unfold"}`,
                   onClick: this.toggleExpand,
                 })
@@ -252,19 +222,6 @@ let ResultViewComponent = class ResultViewComponent extends react_1.default
     this.buttonTooltip.dispose();
     this.closeTooltip.dispose();
   }
-};
-__decorate(
-  [mobx_1.observable, __metadata("design:type", Boolean)],
-  ResultViewComponent.prototype,
-  "expanded",
-  void 0
-);
-__decorate(
-  [mobx_1.action, __metadata("design:type", Object)],
-  ResultViewComponent.prototype,
-  "toggleExpand",
-  void 0
-);
-ResultViewComponent = __decorate([mobx_react_1.observer], ResultViewComponent);
+}
 
-exports.default = ResultViewComponent;
+module.exports = ResultViewComponent;
